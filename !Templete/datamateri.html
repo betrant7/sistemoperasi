@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Data Materi</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <link rel="stylesheet" type="text/css" href="admin.css">
+</head>
+<body>
+    <div id="wrapper">
+        <nav id="sidebar">
+            <div class="sidebar-header">
+                <h3><img src="logo.png" class="img-fluid"/><span>Vishweb design</span></h3>
+            </div>
+            <ul class="list-unstyled components">
+                <li>
+                    <a href="adminberanda.html">
+                        <i class="fa fa-home"></i>
+                        <span>Beranda</span>
+                    </a>
+                </li>               
+                <li>
+                    <a href="datamahasiswa.html">
+                        <i class="fa fa-users"></i>
+                        <span>Data Mahasiswa</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="datamateri.html">
+                        <i class="fa fa-layer-group"></i>
+                        <span>Data Materi</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="laporanpembelajaran.html">
+                        <i class="fa fa-server"></i>
+                        <span>Laporan Pembelajaran</span>
+                    </a>
+                </li>
+            </ul>                   
+        </nav>
+        <div id="content-wrapper" class="d-flex flex-column">
+            <div id="content">
+                <div class="top-navbar">
+                    <nav class="navbar navbar-expand-lg">
+                        <div class="container-fluid">        
+                            <button type="button" id="sidebarCollapse">
+                                <i class="fa fa-bars"></i>
+                            </button>
+                            <div class="justify-content-end">
+                                <ul class="nav navbar-nav ml-auto">
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="#">
+                                            <i class="fa fa-user"></i>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+
+                <div class="main-content">
+                    <div class="container-fluid">
+                        <h2>Hover Rows</h2>
+                        <p>The .table-hover class enables a hover state (grey background on mouse over) on table rows:</p>
+                        <div class="card">
+                            <div class="card-header">
+                                Featured
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-sm" id="example" width="100%" cellspacing="0">
+                                        <thead>
+                                            <tr>
+                                                <th>No</th>
+                                                <th>Kategori</th>
+                                                <th>Materi</th>
+                                                <th>Status</th>
+                                                <th>Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td style="text-align: center;">1</td>
+                                                <td>Betrant Wiprazzia Mezzaluna</td>
+                                                <td>betrant7</td>
+                                                <td>covegaja5@gmail.com</td>
+                                                <td style="text-align: center;">
+                                                    <button type="delete" class="btn btn-danger btn-block">
+                                                        <i class="fa fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td style="text-align: center;">2</td>
+                                                <td>Novia Brenda Aulia Latifah</td>
+                                                <td>yaya</td>
+                                                <td>noviabrenda7761@gmail.com</td>
+                                                <td style="text-align: center;">
+                                                    <button type="delete" class="btn btn-danger btn-block">
+                                                        <i class="fa fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        <footer class="sticky-footer">
+            <div class="container-fluid">
+                <div class="row">
+                    <div>
+                        <p class="copyright d-flex justify-content-end">
+                            &copy; 2025 Mahasiswa IT
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+        </div>
+    </div>
+
+<script src="admin.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+
+</body>
+</html>
