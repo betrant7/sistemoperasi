@@ -3,7 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\LaporanPembelajaran;
-use App\Models\MasterMateri;
+use App\Models\masterMateri;
 use CodeIgniter\Controller;
 
 class LaporanProgres extends Controller
@@ -13,8 +13,8 @@ class LaporanProgres extends Controller
 
     public function __construct()
     {
-        $this->progres = new LaporanPembelajaran();
-        $this->materi = new MasterMateri();
+        $this->progres = new laporanPembelajaran();
+        $this->materi = new masterMateri();
     }
 
     public function index()

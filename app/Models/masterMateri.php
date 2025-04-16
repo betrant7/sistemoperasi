@@ -12,8 +12,8 @@ class MasterMateri extends Model
 
     public function getMateri()
     {
-        return $this->select('materi.*, subMateri.idSubMateri,subMateri.dataMateri,subMateri.judulMateri')
-            ->join('subMateri', 'subMateri.idMateri = materi.idMateri', 'left')
+        return $this->select('materi.*, submateri.idSubMateri,submateri.dataMateri,submateri.judulMateri')
+            ->join('submateri', 'submateri.idMateri = materi.idMateri', 'left')
             ->findAll();
     }  
 
@@ -26,9 +26,9 @@ class MasterMateri extends Model
     {
         $result = $this->db->table('materi')
             ->select('materi.*, 
-                    GROUP_CONCAT(subMateri.idSubMateri ORDER BY subMateri.idSubMateri SEPARATOR "|") as idSubMateri,
-                    GROUP_CONCAT(subMateri.judulMateri ORDER BY subMateri.idSubMateri SEPARATOR "|") as judulMateri')
-            ->join('subMateri', 'subMateri.idMateri = materi.idMateri', 'left')
+                    GROUP_CONCAT(submateri.idSubMateri ORDER BY submateri.idSubMateri SEPARATOR "|") as idSubMateri,
+                    GROUP_CONCAT(submateri.judulMateri ORDER BY submateri.idSubMateri SEPARATOR "|") as judulMateri')
+            ->join('submateri', 'submateri.idMateri = materi.idMateri', 'left')
             ->groupBy('materi.idMateri')
             ->get()
             ->getResultArray();
@@ -44,7 +44,7 @@ class MasterMateri extends Model
 
     public function getTotalSubMateri($materiId)
     {
-        return $this->db->table('subMateri')
+        return $this->db->table('submateri')
                         ->where('idMateri', $materiId)
                         ->countAllResults();
     }

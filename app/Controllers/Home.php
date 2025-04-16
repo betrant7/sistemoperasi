@@ -69,24 +69,28 @@ class Home extends BaseController
     public function loginGoogle()
     {
         $token = $this->googleClient->fetchAccessTokenWithAuthCode($this->request->getVar('code'));
+
         if (!isset($token['error'])) {
             $this->googleClient->setAccessToken($token['access_token']);
             $googleService = new Google_Service_Oauth2($this->googleClient);
             $data = $googleService->userinfo->get();
 
-            $query = $this->db->where('email', $data['email'])->get();
-            $user = $query->getRow();
+            if (!isset($data['email']) || !isset($data['name'])) {
+                return redirect()->to('/login')->with('error', 'Data Google tidak valid.');
+            }
+
+            // ambil user berdasarkan email
+            $user = $this->db->where('email', $data['email'])->first();
 
             if ($user) {
                 $params = [
-                    'idUser' => $user->idUser,
-                    'namaLengkap' => $user->namaLengkap,
-                    'email' => $user->email,
-                    'role' => $user->role
+                    'idUser' => $user['idUser'],
+                    'namaLengkap' => $user['namaLengkap'],
+                    'email' => $user['email'],
+                    'role' => $user['role']
                 ];
             } else {
                 $role = (strpos($data['email'], '@pnm.ac.id') !== false) ? 'dosen' : 'mahasiswa';
-                
                 $newUser = [
                     'namaLengkap' => $data['name'],
                     'email' => $data['email'],
@@ -103,14 +107,14 @@ class Home extends BaseController
 
             session()->set($params);
 
-            if ($params['role'] == 'dosen') {
+            if ($params['role'] === 'dosen') {
                 return redirect()->to('/adminberanda');
             } else {
                 return redirect()->to('/beranda');
             }
         }
 
-        return redirect()->back()->with('error', 'Autentikasi Google gagal.');
+        return redirect()->to('/login')->with('error', 'Autentikasi Google gagal.');
     }
 
     public function logout()

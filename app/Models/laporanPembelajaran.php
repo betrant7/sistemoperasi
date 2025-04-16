@@ -6,15 +6,15 @@ use CodeIgniter\Model;
 
 class LaporanPembelajaran extends Model
 {
-    protected $table = "laporanPembelajaran";
+    protected $table = "laporanpembelajaran";
     protected $primaryKey = "idlaporanPembelajaran";
     protected $allowedFields = ['idUser', 'idMateri','progres', 'waktu'];
 
     public function getProgres()
     {
-        return $this->db->table('laporanPembelajaran')
-            ->select('laporanPembelajaran.*, user.namaLengkap, user.kelas, materi.namaMateri')
-            ->join('user', 'user.idUser = laporanPembelajaran.idUser')
+        return $this->db->table('laporanpembelajaran')
+            ->select('laporanpembelajaran.*, user.namaLengkap, user.kelas, materi.namaMateri')
+            ->join('user', 'user.idUser = laporanpembelajaran.idUser')
             ->join('materi', 'materi.idMateri = laporanPembelajaran.idMateri')
             ->get()
             ->getResultArray();

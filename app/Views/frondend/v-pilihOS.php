@@ -3,7 +3,7 @@
         <div class="card" style="border: none;">
             <div class="card-body">
                 <iframe 
-                    src="https://203.194.112.201:8006/?console=kvm&novnc=1&vmid=100&vmname=coba&node=server&resize=scale" 
+                    src="<?= base_url('novnc/vnc.html') ?>?host=203.194.112.201&port=5901&token=<?= esc($vncticket) ?>&path=/api2/json/nodes/proxmox/qemu/101/vncwebsocket&encrypt=1"
                     width="100%" 
                     height="600px" 
                     frameborder="0">

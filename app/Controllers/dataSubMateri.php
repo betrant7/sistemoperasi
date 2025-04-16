@@ -2,8 +2,8 @@
 
 namespace App\Controllers;
 
-use App\Models\MasterMateri;
-use App\Models\MasterSubMateri;
+use App\Models\masterMateri;
+use App\Models\masterSubMateri;
 
 class DataSubMateri extends BaseController
 {
@@ -12,8 +12,8 @@ class DataSubMateri extends BaseController
 
     public function __construct()
     {
-        $this->subMateri = new MasterSubMateri();
-        $this->materi = new MasterMateri();
+        $this->subMateri = new masterSubMateri();
+        $this->materi = new masterMateri();
     }
 
     public function index($idMateri)

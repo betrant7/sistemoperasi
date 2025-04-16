@@ -6,7 +6,7 @@ use CodeIgniter\Model;
 
 class MasterSubMateri extends Model
 {
-    protected $table = "subMateri";
+    protected $table = "submateri";
     protected $primaryKey = "idSubMateri";
     protected $allowedFields = ['idMateri', 'judulMateri', 'dataMateri'];
 

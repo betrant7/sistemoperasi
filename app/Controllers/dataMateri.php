@@ -2,8 +2,9 @@
 
 namespace App\Controllers;
 
-use App\Models\MasterMateri;
-use App\Models\MasterSubMateri;
+use App\Models\masterMateri;
+use App\Models\masterSubMateri;
+use mysqli;
 
 class DataMateri extends BaseController
 {
@@ -12,8 +13,8 @@ class DataMateri extends BaseController
 
     public function __construct()
     {
-        $this->materi = new MasterMateri();
-        $this->subMateri = new MasterSubMateri();
+        $this->materi = new masterMateri();
+        $this->subMateri = new masterSubMateri();
     }
     public function index()
     {

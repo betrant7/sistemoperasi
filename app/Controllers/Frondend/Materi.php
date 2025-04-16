@@ -2,9 +2,9 @@
 
 namespace App\Controllers\Frondend;
 use App\Controllers\BaseController;
-use App\Models\LaporanPembelajaran;
-use App\Models\MasterMateri;
-use App\Models\MasterSubMateri;
+use App\Models\laporanPembelajaran;
+use App\Models\masterMateri;
+use App\Models\masterSubMateri;
 
 class Materi extends BaseController
 {
@@ -13,9 +13,9 @@ class Materi extends BaseController
     protected $progres;
     public function __construct()
     {
-        $this->materi = new MasterMateri();
-        $this->subMateri = new MasterSubMateri();
-        $this->progres = new LaporanPembelajaran();
+        $this->materi = new masterMateri();
+        $this->subMateri = new masterSubMateri();
+        $this->progres = new laporanPembelajaran();
     }
     public function index()
     {
@@ -66,7 +66,7 @@ class Materi extends BaseController
             'materi' => $this->materi->where('idMateri', $idMateri)->first(),
         ];
         echo view('frondend/v-header');
-        return view('frondend/v-submateri', $data);
+        return view('frondend/v-subMateri', $data);
     }
 
     public function progres()

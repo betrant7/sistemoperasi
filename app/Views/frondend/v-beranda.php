@@ -1,7 +1,7 @@
         <div class="container py-5">
             <div class="row align-items-center py-5 g-5">
                 <div class="col-12 col-md-6 align-items-start">
-                    <img src="/img/os.png" class="img-fluid"/>
+                    <img src="/img/OS.png" class="img-fluid"/>
                 </div>
                 <div class="col-12 col-md-6">
                     <div class="text-center text-md-end">
