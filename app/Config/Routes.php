@@ -39,7 +39,7 @@ $routes->get('/datasubmateri/(:num)', 'dataSubMateri::index/$1');
 $routes->get('/datasubmateri/delete/(:num)', 'dataSubMateri::deleteSub/$1');
 
 $routes->get('/laporan', 'laporanProgres::index');
-
+$routes->post('/laporan/getprogres', 'laporanProgres::getProgres');
 $routes->get('/console/login', 'ProxmoxConsole::login');
 $routes->get('/console/(:num)', 'Console::index/$1');
 
@@ -47,10 +47,10 @@ $routes->get('/beranda', 'Frondend\Beranda::index');
 
 $routes->get('/frondend/logout', 'Frondend\Beranda::logout');
 
-$routes->get('/pilihos', 'Frondend\PilihOs::index');
+$routes->get('/pilihos', 'Frondend\PilihOS::index');
 
 $routes->get('/materi', 'Frondend\Materi::index');
 $routes->get('/materi/pilih/(:num)', 'Frondend\Materi::pilihMateri/$1');
-$routes->post('/materi/progres', 'Frondend\Materi::updateProgress');
-
+$routes->post('/materi/progres', 'Frondend\Materi::updateProgres');
+$routes->post('/materi/selesai', 'Frondend\Materi::selesai');
 $routes->get('/materi/submateri/(:num)', 'Frondend\Materi::subMateri/$1');

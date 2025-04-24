@@ -24,8 +24,8 @@ class Filters extends BaseConfig
         'honeypot'      => Honeypot::class,
         'invalidchars'  => InvalidChars::class,
         'secureheaders' => SecureHeaders::class,
-        'dosen' => \App\Filters\DosenFilter::class,
-        'mahasiswa' => \App\Filters\MahasiswaFilter::class,
+        'dosen' => \App\Filters\dosenFilter::class,
+        'mahasiswa' => \App\Filters\mahasiswaFilter::class,
     ];
 
     /**

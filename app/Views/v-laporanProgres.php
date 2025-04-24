@@ -1,10 +1,14 @@
                 <div class="main-content">
                     <div class="container-fluid">
                         <h2>Laporan Progres Mahasiswa</h2>
-                        <p>Berikut adalah laporan progres pembelajaran mahasiswa:</p>
+                        <p class="text-primary">
+                            <a class="text-url" href="<?php echo base_url('/adminberanda') ?>">Beranda</a>
+                             > 
+                             <a class="text-url" href="<?php echo base_url('/laporan') ?>">Laporan Progres Mahasiswa</a>
+                        </p>
                         <div class="card">
                             <div class="card-header">
-                                <h6 class="m-0 font-weight-bold text-primary">Data Mahasiswa</h6>
+                                <h6 class="m-0 font-weight-bold text-primary">Data Laporan Progres Mahasiswa</h6>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
@@ -28,7 +32,7 @@
                                                 <td>
                                                     <select class="form-select materi-select" data-user="<?= esc($item['idUser']); ?>">
                                                         <?php foreach ($materiList as $materi) : ?>
-                                                            <option value="<?= esc($materi['idMateri']); ?>" <?= ($materi['idMateri'] == $item['idMateri']) ? 'selected' : ''; ?> data-progres="<?= esc($item['progres']); ?>">
+                                                            <option value="<?= esc($materi['idMateri']); ?>" <?= ($materi['idMateri'] == $item['idMateri']) ? 'selected' : ''; ?>>
                                                                 <?= esc($materi['namaMateri']); ?>
                                                             </option>
                                                         <?php endforeach; ?>
@@ -79,30 +83,32 @@
     <script>
         $(document).ready(function () {
             $('#example').DataTable();
-
-            // Event listener untuk mengganti progres saat materi berubah
+        
             $('.materi-select').on('change', function () {
-                let userId = $(this).data('user');
-                let selectedOption = $(this).find(':selected');
-                let newProgress = selectedOption.data('progres');
+                const idUser = $(this).data('user');
+                const idMateri = $(this).val();
+                const $progressBar = $('.progres-bar-' + idUser);
 
-                // Update tampilan progress bar
-                let progressBar = $('.progres-bar-' + userId);
-                progressBar.css('width', newProgress + '%').attr('aria-valuenow', newProgress);
-                progressBar.text(newProgress + '%');
-
-                // Kirim perubahan progres ke backend
-                $.ajax({
-                    url: "<?= base_url('laporan/updateProgres') ?>",
-                    type: "POST",
-                    data: {
-                        idUser: userId,
-                        idMateri: selectedOption.val(),
-                        idSubMateri: 1 // Sesuaikan dengan logika perhitungan sub-materi
+                fetch("<?= base_url('/laporan/getprogres'); ?>", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
                     },
-                    success: function(response) {
-                        console.log("Progres diperbarui:", response);
-                    }
+                    body: JSON.stringify({
+                        idUser: idUser,
+                        idMateri: idMateri
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const progres = data.progres || 0;
+                    $progressBar.css('width', progres + '%');
+                    $progressBar.attr('aria-valuenow', progres);
+                    $progressBar.text(progres + '%');
+                })
+                .catch(error => {
+                    console.error('Gagal mengambil progres:', error);
                 });
             });
         });

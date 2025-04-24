@@ -13,7 +13,7 @@
                         <div class="d-flex justify-content-between mt-3">
                             <button class="btn btn-secondary me-auto" id="prevBtn" style="display: none;">Previous</button>
                             <button class="btn btn-primary ms-auto"id="nextBtn" <?= count($submateri) > 1 ? '' : 'style="display: none;"' ?>>Next</button>
-                            <a href="<?= base_url('/materi') ?>" class="btn btn-success" id="finishBtn" style="display: none;">Selesai</a>
+                            <button class="btn btn-success" id="finishBtn" style="display: none;">Selesai</button>
                         </div>
                     </div>
                 </div>
@@ -132,64 +132,69 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            let currentIndex = 0;
-            const totalMateri = <?= count($submateri); ?>;
-            const prevBtn = document.getElementById("prevBtn");
-            const nextBtn = document.getElementById("nextBtn");
-            const finishBtn = document.getElementById("finishBtn");
-            let idMateri = <?= json_encode($idMateri ?? null); ?>;
-            let idUser = <?= json_encode(session()->get('idUser')); ?>;
-            let subMateriList = <?= json_encode(array_column($submateri, 'idSubMateri')); ?>; // Ambil semua ID submateri
+        let currentIndex = 0;
+        const total = <?= count($submateri); ?>;
+        const idUser = <?= session()->get('idUser'); ?>;
+        const idMateri = <?= $idMateri; ?>;
+        const submateriList = <?= json_encode($submateri); ?>;
 
-            function showMateri(index) {
-                document.querySelectorAll(".submateri-content").forEach((el, i) => {
-                    el.style.display = i === index ? "block" : "none";
-                });
-
-                prevBtn.style.display = index > 0 ? "inline-block" : "none";
-                nextBtn.style.display = index < totalMateri - 1 ? "inline-block" : "none";
-                finishBtn.style.display = index === totalMateri - 1 ? "inline-block" : "none";
-            }
-
-            function updateProgress(index) {
-                let idSubMateri = subMateriList[index];
-
-                fetch("<?= base_url('materi/progres') ?>", {
+        document.getElementById("nextBtn").addEventListener("click", async function () {  
+            // Kirim progres ke controller
+            const idSubMateri = submateriList[currentIndex]['idSubMateri'];
+            try {
+                const response = await fetch("<?= base_url('/materi/progres'); ?>", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
                     body: JSON.stringify({
-                        idMateri: 1, 
-                        idSubMateri: 3
+                        idUser: idUser,
+                        idMateri: idMateri,
+                        idSubMateri: idSubMateri
                     })
-                })
-                .then(response => response.json())
-                .then(data => console.log(data))
-                .catch(error => console.error("Fetch error:", error));
-            }
-
-            if (nextBtn) {
-                nextBtn.addEventListener("click", function () {
-                    if (currentIndex < totalMateri - 1) {
-                        currentIndex++;
-                        showMateri(currentIndex);
-                        updateProgress(currentIndex); // Kirim progres saat pindah ke submateri berikutnya
-                    }
                 });
-            }
 
-            if (prevBtn) {
-                prevBtn.addEventListener("click", function () {
-                    if (currentIndex > 0) {
-                        currentIndex--;
-                        showMateri(currentIndex);
-                    }
+                // Tampilkan submateri berikutnya
+                document.getElementById("submateri-" + currentIndex).style.display = "none";
+                currentIndex++;
+                document.getElementById("submateri-" + currentIndex).style.display = "block";
+
+                // Atur tombol navigasi
+                if (currentIndex > 0) {
+                    document.getElementById("prevBtn").style.display = "inline-block";
+                }
+
+                if (currentIndex === total - 1) {
+                    document.getElementById("nextBtn").style.display = "none";
+                    document.getElementById("finishBtn").style.display = "inline-block";
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+
+        document.getElementById("finishBtn").addEventListener("click", async function() {
+            try {
+                const response = await fetch("<?= base_url('/materi/selesai'); ?>", {
+                    method: "POST", 
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    body: JSON.stringify({
+                        idUser: idUser,
+                        idMateri: idMateri
+                    })
                 });
-            }
 
-            // Panggil fungsi pertama kali untuk menampilkan submateri pertama
-            showMateri(0);
+                // Redirect ke halaman materi
+                window.location.href = "<?= base_url('/materi'); ?>";
+            } catch (error) {
+                console.error('Error:', error);
+            }
         });
     </script>
 </body>
