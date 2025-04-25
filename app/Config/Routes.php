@@ -42,8 +42,9 @@ $routes->get('/laporan', 'laporanProgres::index');
 $routes->post('/laporan/getprogres', 'laporanProgres::getProgres');
 $routes->get('/laporan/detail/(:num)', 'laporanProgres::detail/$1');
 
-$routes->get('/console/login', 'ProxmoxConsole::login');
-$routes->get('/console/(:num)', 'Console::index/$1');
+$routes->get('/vm_console', 'Console::index');
+$routes->get('/vm_console/start/(:num)', 'Console::startVM/$1');
+$routes->get('/vm_console/stop/(:num)', 'Console::stopVM/$1');
 
 $routes->get('/beranda', 'Frondend\Beranda::index');
 

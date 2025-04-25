@@ -1,81 +1,96 @@
 <?php
 
 namespace App\Controllers;
+use App\Models\masterVM;
 
-use CodeIgniter\Controller;
-
-class Console extends Controller
+class Console extends BaseController
 {
-    public function index($vmid)
+    protected $vmModel;
+
+    public function __construct()
     {
-        helper('proxmox');
+        $this->vmModel = new masterVM();
+    }
 
-        $node = 'server'; // ganti sesuai nama node kamu
-        $host = '203.194.112.201';
+    // Menampilkan halaman VM mahasiswa
+    public function index()
+    {
+        $userId = session()->get('idUser'); // Ambil ID user dari session
+        $vmData = $this->vmModel->getVMByUserId($userId);
 
-        $login = proxmox_login();
-
-        if (!$login || !isset($login['ticket'])) {
-            return 'Gagal login ke Proxmox';
+        if (!$vmData) {
+            // Jika mahasiswa belum memiliki VM, buatkan VM baru
+            $this->createVM($userId);
+            $vmData = $this->vmModel->getVMByUserId($userId);
         }
 
-        $vnc = proxmox_post("nodes/{$node}/qemu/{$vmid}/vncproxy", [
-            'websocket' => 1
-        ], $login);
+        return view('vm_console', ['vmData' => $vmData]);
+    }
 
-        if (!isset($vnc['data']['port'], $vnc['data']['ticket'])) {
-            return 'Gagal mendapatkan data VNC';
+    // Fungsi untuk membuat VM baru
+    private function createVM($userId)
+    {
+        // Panggil API untuk create VM baru (misalnya cloning VM)
+        $auth = proxmox_login(); // Fungsi login Proxmox
+        if ($auth) {
+            $postData = [
+                'vmid' => rand(100, 999), // VM ID random atau bisa sesuai template
+                'node' => 'server',
+                // Informasi lainnya yang diperlukan untuk create VM
+            ];
+
+            // Menggunakan API Proxmox untuk membuat VM baru (misalnya cloning)
+            $createVM = proxmox_post('nodes/server/qemu', $postData, $auth);
+
+            if ($createVM && isset($createVM['data'])) {
+                // Simpan VM baru ke database
+                $this->vmModel->createVM([
+                    'idUser' => $userId,
+                    'idVmProxmox' => $createVM['data']['vmid'], // Menyimpan VM ID dari Proxmox
+                    'status' => 'aktif',
+                    'node' => 'server',
+                ]);
+            }
+        }
+    }
+
+    // Fungsi untuk menyalakan VM
+    public function startVM()
+    {
+        $userId = session()->get('idUser');
+        $vmData = $this->vmModel->getVMByUserId($userId);
+
+        if ($vmData) {
+            $auth = proxmox_login(); // Login ke Proxmox
+            $postData = []; // Data yang diperlukan untuk start VM
+            $result = proxmox_post('nodes/server/qemu/' . $vmData['idVmProxmox'] . '/status/start', $postData, $auth);
+
+            if ($result) {
+                // Update status VM ke 'aktif'
+                $this->vmModel->updateVMStatus($vmData['idVM'], 'aktif');
+            }
         }
 
-        return view('vm_console', [
-            'host' => $host,
-            'port' => $vnc['data']['port'],
-            'vncticket' => $vnc['data']['ticket'],
-            'path' => "api2/json/nodes/{$node}/qemu/{$vmid}/vncwebsocket"
-        ]);
+        return redirect()->to('/vm_console');
+    }
+
+    // Fungsi untuk mematikan VM
+    public function stopVM()
+    {
+        $userId = session()->get('idUser');
+        $vmData = $this->vmModel->getVMByUserId($userId);
+
+        if ($vmData) {
+            $auth = proxmox_login(); // Login ke Proxmox
+            $postData = []; // Data yang diperlukan untuk stop VM
+            $result = proxmox_post('nodes/server/qemu/' . $vmData['idVmProxmox'] . '/status/stop', $postData, $auth);
+
+            if ($result) {
+                // Update status VM ke 'nonaktif'
+                $this->vmModel->updateVMStatus($vmData['idVM'], 'nonaktif');
+            }
+        }
+
+        return redirect()->to('/vm_console');
     }
 }
-
-
-    // public function index($vmid)
-    // {
-    //     $node = 'server'; // Ganti sesuai nama node
-    //     $proxmoxIP = '203.194.112.201';
-    //     $username = 'betrant@pve';
-    //     $password = 'betrant7'; // GANTI
-
-    //     // 1. Login ke Proxmox API
-    //     $client = \Config\Services::curlrequest();
-    //     $response = $client->post("https://$proxmoxIP:8006/api2/json/access/ticket", [
-    //         'verify' => false,
-    //         'form_params' => [
-    //             'username' => $username,
-    //             'password' => $password
-    //         ]
-    //     ]);
-
-    //     $body = json_decode($response->getBody(), true);
-    //     $ticket = $body['data']['ticket'];
-    //     $csrf = $body['data']['CSRFPreventionToken'];
-
-    //     // 2. Dapatkan VNC Proxy Info
-    //     $response2 = $client->post("https://$proxmoxIP:8006/api2/json/nodes/$node/qemu/$vmid/vncproxy", [
-    //         'verify' => false,
-    //         'headers' => [
-    //             'Cookie' => "PVEAuthCookie=$ticket",
-    //             'CSRFPreventionToken' => $csrf,
-    //         ],
-    //         'form_params' => [
-    //             'websocket' => 1
-    //         ]
-    //     ]);
-
-    //     $vnc = json_decode($response2->getBody(), true)['data'];
-
-    //     // Kirim data ke view
-    //     return view('vm_console', [
-    //         'websocket_port' => $vnc['port'],
-    //         'vnc_ticket' => $vnc['ticket'],
-    //         'proxmox_ip' => $proxmoxIP
-    //     ]);
-    // }
