@@ -46,8 +46,8 @@
                                                     </div>
                                                 </td>
                                                 <td class="text-center">
-                                                    <a href="<?= base_url('datamahasiswa/delete/' . esc($item['idUser'])); ?>" class="btn btn-sm btn-danger hapus-mahasiswa" data-toggle="tooltip" data-placement="top" title="Hapus">
-                                                        <i class="fas fa-trash"></i>
+                                                    <a href="<?= base_url('laporan/detail/' . $item['idMateri']) ?>" class="btn btn-sm btn-primary" title="Detail subMateri">
+                                                        <i class="fas fa-clone"></i>
                                                     </a>
                                                 </td>
                                             </tr>

@@ -40,6 +40,8 @@ $routes->get('/datasubmateri/delete/(:num)', 'dataSubMateri::deleteSub/$1');
 
 $routes->get('/laporan', 'laporanProgres::index');
 $routes->post('/laporan/getprogres', 'laporanProgres::getProgres');
+$routes->get('/laporan/detail/(:num)', 'laporanProgres::detail/$1');
+
 $routes->get('/console/login', 'ProxmoxConsole::login');
 $routes->get('/console/(:num)', 'Console::index/$1');
 
