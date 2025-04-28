@@ -3,50 +3,32 @@
         <div class="card" style="border: none;">
             <div class="card-body">
                 <iframe 
-                    src="<?= base_url('novnc/vnc.html') ?>"
+                    src="<?= base_url('noVNC/vnc.html') ?>"
                     width="100%" 
                     height="600px" 
                     frameborder="0">
                 </iframe>
                 <p class="mb-0 p-4 pb-0">Select OS :</p>
-                <div class="row mb-4 justify-content-center">
-                    <div class="col-2">
-                        <div class="card text-center">
-                            <div class="card-body">
-                                <img src="/img/debian.svg" class="w-100 mb-3">
-                                <button class="btn btn-primary" style="width: 70%;">Pilih</button>
+                <?php
+                    $osList = [
+                        'debian' => '/img/debian.svg',
+                        'ubuntu' => '/img/ubuntu.svg',
+                        'centos' => '/img/centos.svg',
+                        'kalilinux' => '/img/kalilinux.svg',
+                    ];
+                ?>
+                <div class="row mb-4 justify-content-center g-4">
+                    <?php foreach ($osList as $osName => $osImage) : ?>
+                        <div class="col-6 col-md-2">
+                            <div class="card text-center h-100">
+                                <div class="card-body d-flex flex-column align-items-center">
+                                    <img src="<?= $osImage ?>" class="w-100 mb-3" alt="<?= ucfirst($osName) ?>">
+                                    <a href="<?= base_url('pilihos/createvm/' . $osName) ?>" class="btn btn-primary mt-auto" style="width: 70%;">Pilih</a>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="col-1"></div>
-                    <div class="col-2 pr-0">
-                        <div class="card text-center">
-                            <div class="card-body">
-                                <img src="/img/ubuntu.svg" class="w-100 mb-3">
-                                <button class="btn btn-primary" style="width: 70%;">Pilih</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-1 p-0"></div>
-                    <div class="col-2">
-                        <div class="card text-center">
-                            <div class="card-body">
-                                <img src="/img/centos.svg" class="w-100 mb-3">
-                                <button class="btn btn-primary" style="width: 70%;">Pilih</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-1"></div>
-                    <div class="col-2">
-                        <div class="card text-center">
-                            <div class="card-body">
-                                <img src="/img/kalilinux.svg" class="w-100 mb-3">
-                                <button class="btn btn-primary" style="width: 70%;">Pilih</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
+                    <?php endforeach; ?>
+                </div>                
             </div>
         </div>
     </div>
@@ -101,7 +83,7 @@
             <div class="container p-0">
                 <div class="row justify-content-between">
                     <div class="col-12">
-                        <p class="mb-0 fs-6">© 2025, Mahasiswa Politeknik Negeri Madiun</p>
+                        <p class="mb-0 fs-6">© 2025, Team IT Politeknik Negeri Madiun</p>
                     </div>
                 </div>
             </div>

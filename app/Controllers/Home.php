@@ -44,15 +44,17 @@ class Home extends BaseController
         $query = $this->db->table('user')->where('email', $post['email'])->orWhere('nim', $post['email'])->orWhere('username', $post['email'])->get();
         $user = $query->getRow();
 
-
         if ($user) {
             if ($post['password'] == $user->password) {
+                // Update status menjadi aktif
+                $this->db->update($user->idUser, ['status' => 'aktif']);
+                
                 if ($user->role == 'dosen') {
-                    $params = ['idUser' => $user->idUser, 'role' => $user->role, 'namaLengkap' => $user->namaLengkap];
+                    $params = ['idUser' => $user->idUser, 'role' => $user->role, 'namaLengkap' => $user->namaLengkap, 'status' => 'aktif'];
                     session()->set($params);
                     return redirect()->to('/adminberanda');
                 } elseif ($user->role == 'mahasiswa') {
-                    $params = ['idUser' => $user->idUser, 'role' => $user->role, 'namaLengkap' => $user->namaLengkap, 'nim' => $user->nim];
+                    $params = ['idUser' => $user->idUser, 'role' => $user->role, 'namaLengkap' => $user->namaLengkap, 'nim' => $user->nim, 'status' => 'aktif'];
                     session()->set($params);
                     return redirect()->to('/beranda');
                 } else {
@@ -83,25 +85,31 @@ class Home extends BaseController
             $user = $this->db->where('email', $data['email'])->first();
 
             if ($user) {
+                // Update status menjadi aktif
+                $this->db->update($user['idUser'], ['status' => 'aktif']);
+                
                 $params = [
                     'idUser' => $user['idUser'],
                     'namaLengkap' => $user['namaLengkap'],
                     'email' => $user['email'],
-                    'role' => $user['role']
+                    'role' => $user['role'],
+                    'status' => 'aktif'
                 ];
             } else {
                 $role = (strpos($data['email'], '@pnm.ac.id') !== false) ? 'dosen' : 'mahasiswa';
                 $newUser = [
                     'namaLengkap' => $data['name'],
                     'email' => $data['email'],
-                    'role' => $role
+                    'role' => $role,
+                    'status' => 'aktif'
                 ];
                 $this->db->insert($newUser);
                 $params = [
                     'idUser' => $this->db->insertID(),
                     'namaLengkap' => $data['name'],
                     'email' => $data['email'],
-                    'role' => $role
+                    'role' => $role,
+                    'status' => 'aktif'
                 ];
             }
 
@@ -120,8 +128,14 @@ class Home extends BaseController
     public function logout()
     {
         $session = session();
-        $session->destroy();
-        return redirect()->to('/login')->with('success', 'Anda telah logout.');
+        $userId = $session->get('idUser');
+
+        if ($userId) {
+            $this->db->update($userId, ['status' => 'tidak aktif']);
+           
+            $session->destroy();
+            return redirect()->to('/login')->with('success', 'Anda telah logout.');
+        }
     }
 
 }

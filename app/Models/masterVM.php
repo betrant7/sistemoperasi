@@ -8,12 +8,17 @@ class MasterVM extends Model
 {
     protected $table      = 'listVM';
     protected $primaryKey = 'idVM';
-    protected $allowedFields = ['idUser', 'idVmProxmox', 'status', 'tanggalBuat', 'node'];
+    protected $allowedFields = ['idUser', 'idVmProxmox', 'status', 'jenisVM', 'node'];
 
     // Ambil VM berdasarkan id_user
     public function getVMByUserId($userId)
     {
         return $this->where('idUser', $userId)->first();
+    }
+
+    public function getVMByUserIdAndJenisVM($userId, $jenisVM)
+    {
+        return $this->where('idUser', $userId)->where('jenisVM', $jenisVM)->first();
     }
 
     // Menyimpan data VM ke dalam database

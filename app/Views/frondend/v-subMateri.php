@@ -120,7 +120,7 @@
             <div class="container p-0">
                 <div class="row justify-content-between">
                     <div class="col-12">
-                        <p class="mb-0 fs-6">© 2025, Mahasiswa Politeknik Negeri Madiun</p>
+                        <p class="mb-0 fs-6">© 2025, Team IT Politeknik Negeri Madiun</p>
                     </div>
                 </div>
             </div>
@@ -140,11 +140,47 @@
         const idMateri = <?= $idMateri; ?>;
         const submateriList = <?= json_encode($submateri); ?>;
 
+        document.getElementById("prevBtn").addEventListener("click", async function() {
+            // Sembunyikan submateri saat ini
+            document.getElementById("submateri-" + currentIndex).style.display = "none";
+            currentIndex--;
+            // Tampilkan submateri sebelumnya
+            document.getElementById("submateri-" + currentIndex).style.display = "block";
+
+            // Kirim pengurangan progres ke controller
+            const idSubMateri = submateriList[currentIndex]['idSubMateri'];
+            try {
+                const response = await fetch("<?= base_url('/materi/downprogres'); ?>", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    body: JSON.stringify({
+                        idUser: idUser,
+                        idMateri: idMateri,
+                        idSubMateri: idSubMateri,
+                        decrement: true
+                    })
+                });
+            } catch (error) {
+                console.error('Error:', error);
+            }
+
+            // Atur tombol navigasi
+            if (currentIndex === 0) {
+                document.getElementById("prevBtn").style.display = "none";
+            }
+
+            document.getElementById("nextBtn").style.display = "inline-block";
+            document.getElementById("finishBtn").style.display = "none";
+        });
+
         document.getElementById("nextBtn").addEventListener("click", async function () {  
             // Kirim progres ke controller
             const idSubMateri = submateriList[currentIndex]['idSubMateri'];
             try {
-                const response = await fetch("<?= base_url('/materi/progres'); ?>", {
+                const response = await fetch("<?= base_url('/materi/upprogres'); ?>", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",

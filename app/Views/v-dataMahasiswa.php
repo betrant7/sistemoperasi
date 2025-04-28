@@ -21,6 +21,7 @@
                                                 <th>Kelas</th>
                                                 <th>Username</th>
                                                 <th>Email</th>
+                                                <th>Status</th>
                                                 <th>Aksi</th>
                                             </tr>
                                         </thead>
@@ -33,6 +34,11 @@
                                                 <td class="text-center"><?= $item['kelas']; ?></td>
                                                 <td><?= $item['username']; ?></td>
                                                 <td><?= $item['email']; ?></td>
+                                                <td>
+                                                    <div class="form-check form-switch d-flex justify-content-center align-items-center"  data-toggle="tooltip" data-placement="top" title="<?= $item['status'] ?>">
+                                                        <input class="form-check-input" type="checkbox" <?= $item['status'] == 'aktif' ? 'checked' : ''; ?> disabled>
+                                                    </div>
+                                                </td>
                                                 <td class="text-center">
                                                     <a href="<?= base_url('datamahasiswa/delete/' . $item['idUser']) ?>" class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="top" title="Hapus" id="hapus"><i class="fas fa-trash"></i></a>
                                                 </td>
@@ -51,7 +57,7 @@
                     <div class="row">
                         <div>
                             <p class="copyright d-flex justify-content-end">
-                                &copy; 2025 Mahasiswa IT
+                                © 2025, Team IT Politeknik Negeri Madiun
                             </p>
                         </div>
                     </div>

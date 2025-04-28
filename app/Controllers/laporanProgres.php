@@ -20,17 +20,6 @@ class LaporanProgres extends Controller
         $this->user = new masterUser();
     }
 
-    // public function index()
-    // {
-    //     $idUser = session()->get('idUser');
-    //     $data = [
-    //         'materiList' => $this->materi->findAll(),
-    //         'progres' => $this->progres->findAll($idUser)
-    //     ];
-    //     echo view('v-header');
-    //     return view('v-laporanProgres', $data);
-    // }
-
     public function index()
     {
         // Ambil semua user
@@ -55,13 +44,14 @@ class LaporanProgres extends Controller
                 'kelas' => $user['kelas'],
                 'idMateri' => $idMateri,
                 'progres' => $progress,
+                'waktuMulai' => $latestProgress['waktuMulai'] ?? null,
+                'waktuSelesai' => $latestProgress['waktuSelesai'] ?? null
             ];
         }
         echo view('v-header');
-
         return view('v-laporanProgres', [
             'progres' => $progres,
-            'materiList' => $materiList
+            'materiList' => $materiList,
         ]);
     }
 
@@ -75,7 +65,9 @@ class LaporanProgres extends Controller
                     ->first();
     
         $progress = $row ? $row['progres'] : 0;
+        $waktuMulai = $row ? $row['waktuMulai'] : null;
+        $waktuSelesai = $row ? $row['waktuSelesai'] : null;
     
-        return $this->response->setJSON(['progres' => $progress]);
+        return $this->response->setJSON(['progres' => $progress, 'waktuMulai' => $waktuMulai, 'waktuSelesai' => $waktuSelesai]);
     }
 }

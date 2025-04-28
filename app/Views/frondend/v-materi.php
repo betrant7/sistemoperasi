@@ -1,5 +1,5 @@
     </div>
-    <div class="container my-5 pt-5 vh-100">
+    <div class="container my-5 pt-5">
         <div class="card" style="border: none;">
             <div class="card-body">
                 <h3 class="text-header"><i class="fa fa-image" aria-hidden="true"></i> Materi Sistem Operasi</h3>
@@ -89,7 +89,7 @@
             <div class="container p-0">
                 <div class="row justify-content-between">
                     <div class="col-12">
-                        <p class="mb-0 fs-6">© 2025, Mahasiswa Politeknik Negeri Madiun</p>
+                        <p class="mb-0 fs-6">© 2025, Team IT Politeknik Negeri Madiun</p>
                     </div>
                 </div>
             </div>

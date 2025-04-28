@@ -8,7 +8,7 @@ class LaporanPembelajaran extends Model
 {
     protected $table = "laporanpembelajaran";
     protected $primaryKey = "idlaporanPembelajaran";
-    protected $allowedFields = ['idUser', 'idMateri', 'idSubMateri','progres', 'waktu'];
+    protected $allowedFields = ['idUser', 'idMateri', 'idSubMateri','progres', 'waktuMulai', 'waktuSelesai'];
 
     public function getProgres()
     {

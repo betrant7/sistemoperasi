@@ -42,18 +42,20 @@ $routes->get('/laporan', 'laporanProgres::index');
 $routes->post('/laporan/getprogres', 'laporanProgres::getProgres');
 $routes->get('/laporan/detail/(:num)', 'laporanProgres::detail/$1');
 
-$routes->get('/vm_console', 'Console::index');
-$routes->get('/vm_console/start/(:num)', 'Console::startVM/$1');
-$routes->get('/vm_console/stop/(:num)', 'Console::stopVM/$1');
+$routes->get('/proxmox', 'ProxmoxConsole::login');
 
 $routes->get('/beranda', 'Frondend\Beranda::index');
 
 $routes->get('/frondend/logout', 'Frondend\Beranda::logout');
 
 $routes->get('/pilihos', 'Frondend\PilihOS::index');
+$routes->get('/pilihos/createvm/(:any)', 'Frondend\PilihOS::createVM/$1');
+$routes->get('/pilihos/startvm', 'Frondend\PilihOS::startVM');
+$routes->get('/pilihos/stopvm', 'Frondend\PilihOS::stopVM');
 
 $routes->get('/materi', 'Frondend\Materi::index');
 $routes->get('/materi/pilih/(:num)', 'Frondend\Materi::pilihMateri/$1');
-$routes->post('/materi/progres', 'Frondend\Materi::updateProgres');
+$routes->post('/materi/upprogres', 'Frondend\Materi::updateProgres');
+$routes->post('/materi/downprogres', 'Frondend\Materi::downProgres');
 $routes->post('/materi/selesai', 'Frondend\Materi::selesai');
 $routes->get('/materi/submateri/(:num)', 'Frondend\Materi::subMateri/$1');

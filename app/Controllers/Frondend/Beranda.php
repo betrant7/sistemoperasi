@@ -22,6 +22,10 @@ class Beranda extends BaseController
     public function logout()
     {
         $session = session();
+        $userId = $session->get('idUser');
+        if ($userId) {
+            $this->masterUser->update($userId, ['status' => 'tidak aktif']);
+        }
         $session->destroy(); // Hapus semua session
         return redirect()->to('/login')->with('success', 'Anda telah logout.');
     }

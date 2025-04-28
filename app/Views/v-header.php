@@ -64,7 +64,7 @@
                                 <i class="fa fa-bars"></i>
                             </button>
                             <div class="d-flex align-items-center">
-                                <span class="text-gray-600 small me-2">
+                                <span class="text-black small me-2">
                                     Hallo, <?php echo session()->get('namaLengkap') ?>
                                 </span>
                                 <img src="/img/logo.png" alt="Profile Image" class="rounded-circle" width="40" height="40">

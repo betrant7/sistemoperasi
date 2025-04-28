@@ -42,7 +42,8 @@ class LengkapiData extends BaseController
             'username' => $post['username'],
             'password' => $post['password'],
             'kelas' => $post['kelas'],
-            'role' => 'mahasiswa'
+            'role' => 'mahasiswa',
+            'status' => 'aktif'
         ];
 
         $this->db->update($idUser, $data);

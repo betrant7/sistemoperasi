@@ -4,7 +4,7 @@ function proxmox_login()
 {
     $url = 'https://203.194.112.201:8006/api2/json/access/ticket';
     $data = [
-        'username' => 'root@pam',
+        'username' => 'admin@pam',
         'password' => 'betrant7' // ganti ini ya
     ];
 

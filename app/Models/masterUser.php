@@ -8,7 +8,7 @@ class masterUser extends Model
 {
     protected $table = "user";
     protected $primaryKey = "idUser";
-    protected $allowedFields = ['username', 'password', 'role', 'namaLengkap', 'email', 'kelas', 'nim'];
+    protected $allowedFields = ['username', 'password', 'role', 'namaLengkap', 'email', 'kelas', 'nim', 'status'];
 
     public function saveUser($data)
     {
@@ -34,5 +34,4 @@ class masterUser extends Model
     {
         return $this->where('role', 'Mahasiswa')->findAll();
     }
-
 }

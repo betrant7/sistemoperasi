@@ -50,21 +50,14 @@ class Materi extends BaseController
             ->where('idUser', $idUser)
             ->first();
 
-        $data = [
-            'idMateri' => $idMateri,
-            'idUser' => $idUser,
-            'idSubMateri' => $idSubMateri,
-            'progres' => 0,
-            'waktu' => date('Y-m-d H:i:s')
-        ];
-
-        if ($existing) {
-            $this->progres
-                ->where('idMateri', $idMateri)
-                ->where('idUser', $idUser)
-                ->set($data)
-                ->update();
-        } else {
+        if (!$existing) {
+            $data = [
+                'idMateri' => $idMateri,
+                'idUser' => $idUser,
+                'idSubMateri' => $idSubMateri,
+                'progres' => 0,
+                'waktuMulai' => date('Y-m-d H:i:s', strtotime('+7 hours'))
+            ];
             $this->progres->insert($data);
         }
 
@@ -83,6 +76,42 @@ class Materi extends BaseController
         return view('frondend/v-subMateri', $data);
     }
 
+    public function downProgres()
+    {
+        $data = $this->request->getJSON();
+
+        // Get total submateri count for this materi
+        $totalSubmateri = $this->subMateri->where('idMateri', $data->idMateri)->countAllResults();
+
+        // Calculate progress percentage for each submateri
+        $progressPerSubmateri = 100 / $totalSubmateri;
+
+        // Check if record exists for this user and materi
+        $existing = $this->progres->where('idUser', $data->idUser)
+                        ->where('idMateri', $data->idMateri)
+                        ->first();
+
+        if ($existing) {
+            // Update existing record with decremented progress
+            $newProgress = $existing['progres'] - $progressPerSubmateri;
+            if ($newProgress < 0) {
+                $newProgress = 0;
+            }
+            
+            $this->progres->update($existing['idlaporanPembelajaran'], [
+                'idSubMateri' => $data->idSubMateri,
+                'progres' => round($newProgress),
+            ]);
+
+            $totalProgress = round($newProgress);
+        }
+
+        return $this->response->setJSON([
+            'status' => 'ok',
+            'progress' => $totalProgress
+        ]);
+    }
+    
     public function updateProgres()
     {
         $data = $this->request->getJSON();
@@ -118,7 +147,7 @@ class Materi extends BaseController
                 'idMateri' => $data->idMateri,
                 'idSubMateri' => $data->idSubMateri,
                 'progres' => round($progressPerSubmateri),
-                'waktu' => date('Y-m-d H:i:s')
+                'waktuMulai' => date('Y-m-d H:i:s')
             ]);
 
             $totalProgress = round($progressPerSubmateri);
@@ -139,15 +168,14 @@ class Materi extends BaseController
                         ->where('idMateri', $data->idMateri)
                         ->first();
 
-        if ($existing) {
+        if ($existing && !$existing['waktuSelesai']) {
             $this->progres->update($existing['idlaporanPembelajaran'], [
-                'progres' => 100
+                'progres' => 100,
+                'waktuSelesai' => date('Y-m-d H:i:s', strtotime('+7 hours'))
             ]);
         }
-
         // Redirect back to materi page
         return redirect()->to('/materi');
     }
     
-
 }

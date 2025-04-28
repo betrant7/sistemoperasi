@@ -106,7 +106,8 @@
                 <div class="container-fluid">
                     <div class="row">
                         <div>
-                            <p class="copyright d-flex justify-content-end"> &copy; 2025 Mahasiswa IT
+                            <p class="copyright d-flex justify-content-end">
+                                © 2025, Team IT Politeknik Negeri Madiun
                             </p>
                         </div>
                     </div>

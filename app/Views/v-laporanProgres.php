@@ -19,8 +19,10 @@
                                                 <th class="w-30">Nama</th>
                                                 <th class="w-10">Kelas</th>
                                                 <th class="w-15">Materi</th>
+                                                <th class="w-10">Waktu Mulai</th>
+                                                <th class="w-10">Waktu Selesai</th>
                                                 <th class="w-30">Progres</th>
-                                                <th class="w-10">Aksi</th>
+                                                
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -37,18 +39,15 @@
                                                             </option>
                                                         <?php endforeach; ?>
                                                     </select>
-                                                </td>
+                                                </td>                                        
+                                                <td class="text-center waktu-mulai-<?= esc($item['idUser']); ?>"><?= esc($item['waktuMulai']); ?></td>
+                                                <td class="text-center waktu-selesai-<?= esc($item['idUser']); ?>"><?= esc($item['waktuSelesai']); ?></td>
                                                 <td>
                                                     <div class="progress">
                                                         <div class="progress-bar bg-success progres-bar-<?= esc($item['idUser']); ?>" role="progressbar" style="width: <?= esc($item['progres']); ?>%;" aria-valuenow="<?= esc($item['progres']); ?>" aria-valuemin="0" aria-valuemax="100">
                                                             <?= esc($item['progres']); ?>%
                                                         </div>
                                                     </div>
-                                                </td>
-                                                <td class="text-center">
-                                                    <a href="<?= base_url('laporan/detail/' . $item['idMateri']) ?>" class="btn btn-sm btn-primary" title="Detail subMateri">
-                                                        <i class="fas fa-clone"></i>
-                                                    </a>
                                                 </td>
                                             </tr>
                                             <?php endforeach; ?>
@@ -65,7 +64,7 @@
                     <div class="row">
                         <div>
                             <p class="copyright d-flex justify-content-end">
-                                &copy; 2025 Mahasiswa IT
+                                © 2025, Team IT Politeknik Negeri Madiun
                             </p>
                         </div>
                     </div>
@@ -75,6 +74,7 @@
     </div>
 
     <!-- JavaScript -->
+    <script src="/js/admin.js"></script>
     <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.datatables.net/2.2.2/js/dataTables.js"></script>
@@ -88,6 +88,8 @@
                 const idUser = $(this).data('user');
                 const idMateri = $(this).val();
                 const $progressBar = $('.progres-bar-' + idUser);
+                const $waktuMulai = $('.waktu-mulai-' + idUser);
+                const $waktuSelesai = $('.waktu-selesai-' + idUser);
 
                 fetch("<?= base_url('/laporan/getprogres'); ?>", {
                     method: 'POST',
@@ -106,6 +108,10 @@
                     $progressBar.css('width', progres + '%');
                     $progressBar.attr('aria-valuenow', progres);
                     $progressBar.text(progres + '%');
+                    
+                    // Update waktu mulai dan selesai
+                    $waktuMulai.text(data.waktuMulai || '-');
+                    $waktuSelesai.text(data.waktuSelesai || '-');
                 })
                 .catch(error => {
                     console.error('Gagal mengambil progres:', error);

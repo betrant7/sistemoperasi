@@ -5,8 +5,8 @@
                                 <a class="text-url" href="<?php echo base_url('/adminberanda') ?>">Beranda</a>
                                 > 
                                 <a class="text-url" href="<?php echo base_url('/datamateri') ?>">Data Materi</a>
-                                 >
-                                 <a class="text-url" href="<?php echo base_url('/datasubmateri/'. $materi['idMateri']) ?>">Data Sub Materi</a>
+                                >
+                                <a class="text-url" href="<?php echo base_url('/datasubmateri/'. $materi['idMateri']) ?>">Data Sub Materi</a>
                             </p>                            
                             <div class="card">
                                 <div class="card-header">
@@ -49,7 +49,7 @@
                         <div class="row">
                             <div>
                                 <p class="copyright d-flex justify-content-end">
-                                    &copy; 2025 Mahasiswa IT
+                                    © 2025, Team IT Politeknik Negeri Madiun
                                 </p>
                             </div>
                         </div>

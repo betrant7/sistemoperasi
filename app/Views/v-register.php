@@ -45,7 +45,7 @@
 										<div class="form-group">
                                             <span><strong>Kelas</strong></span>
                                             <span style="color:red">*</span>
-                                            <input id="kelas" type="text" class="form-control" name="kelas" required placeholder="Masukkan Kelas">
+                                            <input id="kelas" type="text" class="form-control" name="kelas" placeholder="Masukkan Kelas">
                                         </div>
                                     </div>
                                     <div class="col">

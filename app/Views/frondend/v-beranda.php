@@ -1,4 +1,4 @@
-        <div class="container py-5">
+        <div class="container py-5 vh-100">
             <div class="row align-items-center py-5 g-5">
                 <div class="col-12 col-md-6 align-items-start">
                     <img src="/img/OS.png" class="img-fluid"/>
@@ -89,7 +89,7 @@
             <div class="container p-0">
                 <div class="row justify-content-between">
                     <div class="col-12">
-                        <p class="mb-0 fs-6">© 2025, Mahasiswa Politeknik Negeri Madiun</p>
+                        <p class="mb-0 fs-6">© 2025, Team IT Politeknik Negeri Madiun</p>
                     </div>
                 </div>
             </div>
