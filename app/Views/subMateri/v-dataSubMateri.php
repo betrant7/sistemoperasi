@@ -29,7 +29,7 @@
                                                 <tr>
                                                     <td class="text-center"><?= $k + 1 ?></td>
                                                     <td><?= $item['judulMateri']; ?></td>
-                                                    <td><?= $item['dataMateri']; ?></td>
+                                                    <td><?= substr($item['dataMateri'], 0, 50) . '...'; ?></td>
                                                     <td class="text-center">
                                                         <a href="<?= base_url('datasubmateri/update/' . $item['idSubMateri']) ?>" class="btn btn-sm btn-warning" title="Update"><i class="fas fa-pencil-alt"></i></a>
                                                         <a href="<?= base_url('datasubmateri/delete/' . $item['idSubMateri']) ?>" class="btn btn-sm btn-danger" title="Hapus"><i class="fas fa-trash"></i></a>

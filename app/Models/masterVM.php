@@ -6,7 +6,7 @@ use CodeIgniter\Model;
 
 class MasterVM extends Model
 {
-    protected $table      = 'listVM';
+    protected $table      = 'listvm';
     protected $primaryKey = 'idVM';
     protected $allowedFields = ['idUser', 'idVmProxmox', 'status', 'jenisVM', 'node'];
 
@@ -37,5 +37,20 @@ class MasterVM extends Model
     public function deleteVM($id_vm)
     {
         return $this->delete($id_vm);
+    }
+
+    public function getActiveVMsByUserId($userId)
+    {
+        return $this->where('idUser', $userId)
+                    ->where('status', 'aktif')
+                    ->first();
+    }
+
+    // Update status VM berdasarkan idVmProxmox
+    public function updateVMStatusByProxmoxID($idVmProxmox, $status)
+    {
+        return $this->where('idVmProxmox', $idVmProxmox)
+                    ->set(['status' => $status])
+                    ->update();
     }
 }

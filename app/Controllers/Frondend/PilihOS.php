@@ -15,8 +15,45 @@ class PilihOS extends BaseController
 
     public function index()
     {
+        $auth = proxmox_login();
+        $vmList = [];
+        $vmDetails = [];
+        $ticket = null;
+
+        if ($auth) {
+            $vmListResponse = proxmox_get('nodes/server/qemu', $auth);
+            if (isset($vmListResponse['data'])) {
+                $vmList = $vmListResponse['data'];
+            }
+
+            // Get user's VM data
+            $userId = session()->get('idUser');
+            $vmData = $this->vmModel->getActiveVMsByUserId($userId);
+
+            if ($vmData) {
+                // Get detailed VM information from Proxmox
+                $vmDetailsResponse = proxmox_get('nodes/server/qemu/' . $vmData['idVmProxmox'] . '/status/current', $auth);
+                if (isset($vmDetailsResponse['data'])) {
+                    $vmDetails = $vmDetailsResponse['data'];
+                }
+
+                // Get VNC ticket for console access
+                $ticketResponse = proxmox_post('nodes/server/qemu/' . $vmData['idVmProxmox'] . '/vncproxy', [], $auth);
+                if (isset($ticketResponse['data'])) {
+                    $ticket = $ticketResponse['data']['ticket'];
+                }
+            }
+        }
+
+        $data = [
+            'vmList' => $vmList,
+            'vmData' => $vmData ?? null,
+            'vmDetails' => $vmDetails,
+            'ticket' => $ticket
+        ];
+
         echo view('frondend/v-header');
-        return view('frondend/v-pilihOS');
+        return view('frondend/v-pilihOS', $data);
     }
 
     public function createVM($os)
@@ -24,10 +61,29 @@ class PilihOS extends BaseController
         $userId = session()->get('idUser'); // Ambil ID user dari session
         $vmData = $this->vmModel->getVMByUserIdAndJenisVM($userId, $os);
 
-        // Jika user sudah memiliki VM, langsung kembali ke halaman pilih OS
+        // Cek apakah ada VM aktif lain milik user
+        $activeVM = $this->vmModel->getActiveVMsByUserId($userId);
+        if ($activeVM && $activeVM['jenisVM'] != $os) {
+            // Matikan VM yang sedang aktif
+            $auth = proxmox_login();
+            $postData = [];
+            $result = proxmox_post('nodes/server/qemu/' . $activeVM['idVmProxmox'] . '/status/stop', $postData, $auth);
+            if ($result) {
+                $this->vmModel->updateVMStatus($activeVM['idVM'], 'nonaktif');
+            }
+        }
+
+        // Jika user sudah memiliki VM dengan OS yang dipilih
         if ($vmData) {
-            echo view('frondend/v-header');
-            return view('frondend/v-pilihOS');
+            $auth = proxmox_login(); // Login ke Proxmox
+            $postData = []; // Data yang diperlukan untuk start VM
+            $result = proxmox_post('nodes/server/qemu/' . $vmData['idVmProxmox'] . '/status/start', $postData, $auth);
+
+            if ($result) {
+                // Update status VM ke 'aktif'
+                $this->vmModel->updateVMStatus($vmData['idVM'], 'aktif');
+            }
+            return redirect()->to('/pilihos');
         }
 
         // Jika belum punya VM, buat VM baru
@@ -80,32 +136,27 @@ class PilihOS extends BaseController
                     'node' => 'server',
                     'jenisVM' => $os,
                 ]);
+
+                // Langsung nyalakan VM setelah dibuat
+                $vmData = $this->vmModel->getVMByUserId($userId);
+
+                if ($vmData) {
+                    $auth = proxmox_login(); // Login ke Proxmox
+                    $postData = []; // Data yang diperlukan untuk start VM
+                    $result = proxmox_post('nodes/server/qemu/' . $vmData['idVmProxmox'] . '/status/start', $postData, $auth);
+
+                    if ($result) {
+                        // Update status VM ke 'aktif'
+                        $this->vmModel->updateVMStatus($vmData['idVM'], 'aktif');
+                    }
+                    return redirect()->to('/pilihos');
+                }
+
             } else {
                 echo "Gagal membuat VM. Error: " . json_encode($createVM);
             }
         }
-        echo view('frondend/v-header');
-        return view('frondend/v-pilihOS');
-    }
-
-    // Fungsi untuk menyalakan VM
-    public function startVM()
-    {
-        $userId = session()->get('idUser');
-        $vmData = $this->vmModel->getVMByUserId($userId);
-
-        if ($vmData) {
-            $auth = proxmox_login(); // Login ke Proxmox
-            $postData = []; // Data yang diperlukan untuk start VM
-            $result = proxmox_post('nodes/server/qemu/' . $vmData['idVmProxmox'] . '/status/start', $postData, $auth);
-
-            if ($result) {
-                // Update status VM ke 'aktif'
-                $this->vmModel->updateVMStatus($vmData['idVM'], 'aktif');
-            }
-        }
-
-        return redirect()->to('/vm_console');
+        return redirect()->to('/pilihos');
     }
 
     // Fungsi untuk mematikan VM
@@ -125,6 +176,6 @@ class PilihOS extends BaseController
             }
         }
 
-        return redirect()->to('/vm_console');
+        return redirect()->to('/pilihos');
     }
 }

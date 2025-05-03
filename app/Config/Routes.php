@@ -59,3 +59,5 @@ $routes->post('/materi/upprogres', 'Frondend\Materi::updateProgres');
 $routes->post('/materi/downprogres', 'Frondend\Materi::downProgres');
 $routes->post('/materi/selesai', 'Frondend\Materi::selesai');
 $routes->get('/materi/submateri/(:num)', 'Frondend\Materi::subMateri/$1');
+
+$routes->get('/console', 'console::getData');

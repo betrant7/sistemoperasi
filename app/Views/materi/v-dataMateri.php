@@ -16,11 +16,11 @@
                                         <table class="table table-striped table-hover table-bordered" id="example" width="100%" cellspacing="0">
                                             <thead>
                                                 <tr class="text-center">
-                                                    <th>No</th>
-                                                    <th>Kategori Materi</th>
-                                                    <th>Judul Sub Materi</th>
-                                                    <th>Status</th>
-                                                    <th>Aksi</th>
+                                                    <th class="w-10">No</th>
+                                                    <th class="w-25">Kategori Materi</th>
+                                                    <th class="w-50">Judul Sub Materi</th>
+                                                    <th class="w-15">Status</th>
+                                                    <th class="w-10">Aksi</th>
                                                 </tr>
                                             </thead>
                                             <tbody>

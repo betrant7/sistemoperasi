@@ -2,8 +2,8 @@
     <div class="container my-5 pt-5">
         <div class="row">
             <div class="col-4 pt-3">
-                <div class="card">
-                    <div class="card-body">
+                <div class="card" style="box-shadow: 0 8px 8px rgba(0,0,0,0.1); border: none;">
+                    <div class="card-body" style="max-height: 100vh; overflow-y: auto; width: 100%;">
                         <?php foreach ($submateri as $k => $item) : ?>
                             <div class="submateri-content" id="submateri-<?= $k; ?>" style="<?= $k === 0 ? '' : 'display: none;' ?>">
                                 <h5><?= $item['judulMateri']; ?></h5>

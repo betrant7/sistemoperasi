@@ -2,12 +2,69 @@
     <div class="container my-5 pt-4">
         <div class="card" style="border: none;">
             <div class="card-body">
-                <iframe 
-                    src="<?= base_url('noVNC/vnc.html') ?>"
-                    width="100%" 
-                    height="600px" 
-                    frameborder="0">
-                </iframe>
+                <?php if (!empty($vmData)): ?>
+                    <div class="mb-4">
+                        <h5>Virtual Machine Status:</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Basic Information</h6>
+                                        <p class="mb-1">VM ID: <?= $vmData['idVmProxmox'] ?></p>
+                                        <p class="mb-1">Status: <span class="badge <?= $vmData['status'] == 'aktif' ? 'bg-success' : 'bg-danger' ?>"><?= ucfirst($vmData['status']) ?></span></p>
+                                        <p class="mb-1">Node: <?= $vmData['node'] ?></p>
+                                        <p class="mb-1">OS Type: <?= ucfirst($vmData['jenisVM']) ?></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php if (!empty($vmDetails)): ?>
+                            <div class="col-md-6">
+                                <div class="card mb-3">
+                                    <div class="card-body">
+                                        <h6 class="card-title">Resource Usage</h6>
+                                        <p class="mb-1">CPU Usage: <?= number_format($vmDetails['cpu'] ?? 0, 2) ?>%</p>
+                                        <p class="mb-1">Memory Usage: <?= number_format(($vmDetails['mem'] ?? 0) / 1024 / 1024, 2) ?> GB</p>
+                                        <p class="mb-1">Disk Usage: <?= number_format(($vmDetails['disk'] ?? 0) / 1024 / 1024, 2) ?> GB</p>
+                                        <p class="mb-1">Uptime: <?= isset($vmDetails['uptime']) ? gmdate("H:i:s", $vmDetails['uptime']) : 'N/A' ?></p>
+                                    </div>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h6 class="card-title">Console Access</h6>
+                                <?php if($ticket): ?>
+                                <iframe 
+                                    src="<?= base_url('noVNC/vnc.html?host=' . $_SERVER['SERVER_NAME'] . '&port=6081&path=api2/json/nodes/server/qemu/' . $vmData['idVmProxmox'] . '/vncproxy&ticket=' . urlencode($ticket)) ?>"
+                                    width="100%" 
+                                    height="600px" 
+                                    frameborder="0"
+                                    allow="fullscreen">
+                                </iframe>
+                                <?php else: ?>
+                                <div class="alert alert-warning">
+                                    Unable to establish VNC connection. Please check if:
+                                    <ul>
+                                        <li>The VM is running</li>
+                                        <li>VNC service is enabled on Proxmox</li>
+                                        <li>Network connectivity between client and server</li>
+                                    </ul>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <?php if($vmData['status'] == 'aktif'): ?>
+                            <a href="<?= base_url('pilihos/stopvm') ?>" class="btn btn-danger mt-3">Stop VM</a>
+                        <?php endif; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="alert alert-info">
+                        Please select an operating system below to create your virtual machine.
+                    </div>
+                <?php endif; ?>
                 <p class="mb-0 p-4 pb-0">Select OS :</p>
                 <?php
                     $osList = [

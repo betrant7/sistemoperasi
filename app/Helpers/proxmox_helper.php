@@ -42,3 +42,22 @@ function proxmox_post($endpoint, $postData, $auth)
 
     return json_decode($res, true);
 }
+function proxmox_get($endpoint, $auth)
+{
+    $url = 'https://203.194.112.201:8006/api2/json/' . $endpoint;
+
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CUSTOMREQUEST => 'GET',
+        CURLOPT_COOKIE => 'PVEAuthCookie=' . $auth['ticket'],
+        CURLOPT_HTTPHEADER => ['CSRFPreventionToken: ' . $auth['CSRFPreventionToken']],
+        CURLOPT_SSL_VERIFYPEER => false
+    ]);
+
+    $res = curl_exec($ch);
+    curl_close($ch);
+
+    return json_decode($res, true);
+}
+
