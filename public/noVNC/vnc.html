@@ -411,27 +411,6 @@
     <audio id="noVNC_bell">
         <source src="app/sounds/bell.oga" type="audio/ogg">
         <source src="app/sounds/bell.mp3" type="audio/mpeg">
-    </audio>
-
-    ///
-
-    <script type="module">
-        import RFB from './core/rfb.js';
-      
-        const url = "wss://203.194.112.201:5900/?vncticket=PVEVNC:6815D7CE::pQnpV...";
-        const screen = document.getElementById('noVNC_canvas');
-      
-        const rfb = new RFB(screen, url, {
-          credentials: {
-            password: '' // kosongkan, karena pakai ticket
-          }
-        });
-      
-        rfb.viewOnly = false;
-        rfb.scaleViewport = true;
-      </script>
-      
-      <div id="noVNC_canvas" style="width: 100%; height: 600px; background: black;"></div>
-      
+    </audio>      
  </body>
 </html>

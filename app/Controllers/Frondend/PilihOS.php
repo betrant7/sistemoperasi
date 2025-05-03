@@ -124,6 +124,9 @@ class PilihOS extends BaseController
                 'net0' => 'virtio,bridge=vmbr0,firewall=1',
                 'scsi0' => 'local:32,format=qcow2,iothread=on',
                 'scsihw' => 'virtio-scsi-single',
+                'vga' => 'std',
+                'serial0' => 'socket',
+                'boot' => 'order=scsi0;ide2;net0',
             ];
 
             $createVM = proxmox_post('nodes/server/qemu', $postData, $auth);
