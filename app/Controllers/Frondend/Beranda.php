@@ -27,6 +27,6 @@ class Beranda extends BaseController
             $this->masterUser->update($userId, ['status' => 'tidak aktif']);
         }
         $session->destroy(); // Hapus semua session
-        return redirect()->to('/login')->with('success', 'Anda telah logout.');
+        return redirect()->to('/')->with('success', 'Anda telah logout.');
     }
 }

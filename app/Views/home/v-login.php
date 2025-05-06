@@ -25,8 +25,8 @@
 								<?php if(session()->getFlashdata('error')) : ?>
 								<div class="alert alert-denger alert-dismissible show fade p-0 text-center">
 									<div class="alert-body">
-										<b>Error !</b>
-										<?= session()->getFlashdata('error')?>
+										<b style="color: red;">Error !</b>
+										<span style="color: red;"><?= session()->getFlashdata('error')?></span>
 									</div>
 								</div>
 								<?php endif ?>
@@ -41,13 +41,13 @@
 										<span style="color:red">*</span>
 										<input id="password" type="password" class="form-control password" name="password" required placeholder="Masukkan Password">
 										<i class="fa fa-eye-slash" id="togglePassword" style="cursor: pointer;"></i>
-										<a class="reset" href="">Lupa Password?</a>
+										<a class="reset" href="<?php echo base_url('/verifikasi')?>">Lupa Password?</a>
 									</div>
 									<div class="form-group m-0">
 										<button type="submit" class="btn btn-primary btn-flat btn-block btn-login">Masuk</button>
 									</div>
 									<div class="mt-1 mb-4 text-center">
-										Belum Punya Akun? <a class="register" href="<?php echo base_url('register') ?>">Daftar</a>
+										Belum Punya Akun? <a class="register" href="<?php echo base_url('/register') ?>">Daftar</a>
 									</div>
 									<div class="mx-3 my-2 py-2 bordert">
 										<div class="mt-3 google">

@@ -14,7 +14,7 @@ class Register extends BaseController
     }
     public function index()
     {
-        return view('v-register');
+        return view('home/v-register');
     }
     public function registerProses()
     {

@@ -23,8 +23,8 @@
                             <?php if(session()->getFlashdata('error')) : ?>
                             <div class="alert alert-denger alert-dismissible show fade p-0 text-center">
                                 <div class="alert-body">
-                                    <b>Error !</b>
-                                    <?= session()->getFlashdata('error')?>
+                                    <b style="color: red;">Error !</b>
+                                    <span style="color: red;"><?= session()->getFlashdata('error')?></span>
                                 </div>
                             </div>
                             <?php endif ?>

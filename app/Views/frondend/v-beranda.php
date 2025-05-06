@@ -17,12 +17,13 @@
             </div>
         </div>
     </div>
-    <div class="container my-5 pb-5">
-        <div class="row align-items-center gx-3 gy-5 py-5 mt-5">
-            <div class="col-12 col-md-12 col-lg-5">
+
+    <div class="container my-5 py-3">
+        <div class="row align-items-center gx-3 gy-5 py-5 my-5">
+            <div class="col-12 col-md-12 col-lg-5 mt-0 mb-5">
                 <img src="/img/banner2.png" class="img-fluid mx-auto d-block" alt="a man using vr gadget"/>
             </div>
-            <div class="col-12 col-md-12 text-center text-lg-start col-lg-7">
+            <div class="col-12 col-md-12 text-center text-lg-start col-lg-7 mt-0 mb-5">
                 <h2 class="fw-bold text-primary fs-1 pb-3">Tentang Sistem Operasi</h2>
                 <p class="about-text">
                     Sistem operasi adalah komponen perangkat lunak dari sebuah sistem komputer yang bertanggung
@@ -39,7 +40,7 @@
         </div>
     </div>
 
-    <footer class="bg-dark">
+    <footer class="bg-dark mt-5">
         <div class="footer-top">
             <div class="container p-0 mb-4">
                 <div class="row gy-5">

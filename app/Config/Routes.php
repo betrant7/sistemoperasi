@@ -5,7 +5,8 @@ use CodeIgniter\Router\RouteCollection;
 /**
  * @var RouteCollection $routes
  */
-$routes->get('/', 'Home::index');
+$routes->get('/', 'Frondend\Beranda::index');
+
 $routes->get('/login', 'Home::login');
 $routes->get('/login/logingoogle', 'Home::loginGoogle');
 $routes->add('/loginproses', 'Home::loginProses');
@@ -47,6 +48,11 @@ $routes->get('/proxmox', 'ProxmoxConsole::login');
 $routes->get('/beranda', 'Frondend\Beranda::index');
 
 $routes->get('/frondend/logout', 'Frondend\Beranda::logout');
+
+$routes->get('/verifikasi', 'ubahPassword::index');
+$routes->post('/verifikasi/proses', 'ubahPassword::verifikasi');
+$routes->get('/ubahpassword', 'ubahPassword::ubahPassword');
+$routes->post('/ubahpassword/proses', 'ubahPassword::proses');
 
 $routes->get('/pilihos', 'Frondend\PilihOS::index');
 $routes->get('/pilihos/createvm/(:any)', 'Frondend\PilihOS::createVM/$1');

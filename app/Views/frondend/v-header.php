@@ -25,21 +25,33 @@
                             <a class="nav-link" href="<?php echo base_url('beranda') ?>">Beranda</a>
                         </li>
                         <li class="nav-item ms-0 ms-md-3">
-                            <?php if (session()->get('isDataComplete')): ?>
-                                <a class="nav-link" href="<?= base_url('pilihos') ?>">Pilihan OS</a>
+                            <?php if (session()->get('idUser')): ?>
+                                <?php if (session()->get('isDataComplete')): ?>
+                                    <a class="nav-link" href="<?= base_url('pilihos') ?>">Pilihan OS</a>
+                                <?php else: ?>
+                                    <a class="nav-link" href="<?= base_url('lengkapidata?redirect=pilihos') ?>" onclick="alert('Silakan lengkapi data Anda terlebih dahulu!')">Pilih OS</a>
+                                <?php endif; ?>
                             <?php else: ?>
-                                <a class="nav-link" href="<?= base_url('lengkapidata?redirect=pilihos') ?>" onclick="alert('Silakan lengkapi data Anda terlebih dahulu!')">Pilih OS</a>
+                                <a class="nav-link" href="<?= base_url('login') ?>" onclick="alert('Silakan login terlebih dahulu!')">Pilih OS</a>
                             <?php endif; ?>
                         </li>
                         <li class="nav-item ms-0 ms-md-3">
-                            <?php if (session()->get('isDataComplete')): ?>
-                                <a class="nav-link" href="<?= base_url('materi') ?>">Materi</a>
+                            <?php if (session()->get('idUser')): ?>
+                                <?php if (session()->get('isDataComplete')): ?>
+                                    <a class="nav-link" href="<?= base_url('materi') ?>">Materi</a>
+                                <?php else: ?>
+                                    <a class="nav-link" href="<?= base_url('lengkapidata?redirect=materi') ?>" onclick="alert('Silakan lengkapi data Anda terlebih dahulu!')">Materi</a>
+                                <?php endif; ?>
                             <?php else: ?>
-                                <a class="nav-link" href="<?= base_url('lengkapidata?redirect=materi') ?>" onclick="alert('Silakan lengkapi data Anda terlebih dahulu!')">Materi</a>
+                                <a class="nav-link" href="<?= base_url('login') ?>" onclick="alert('Silakan login terlebih dahulu!')">Materi</a>
                             <?php endif; ?>
                         </li>
-                        <li class="nav-item ms-0 ms-md-3">
-                            <a class="nav-link" href="<?php echo base_url('frondend/logout') ?>">Logout</a>
+                        <li class="nav-item dropdown ms-0 ms-md-3">
+                            <?php if (session()->get('idUser')): ?>
+                                <a class="nav-link" href="<?= base_url('frondend/logout') ?>">Logout</a>
+                            <?php else: ?>
+                                <a class="nav-link" href="<?= base_url('login') ?>">Login</a>
+                            <?php endif; ?>
                         </li>
                     </ul>
                 </div>

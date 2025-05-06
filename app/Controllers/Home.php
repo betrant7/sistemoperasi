@@ -35,7 +35,7 @@ class Home extends BaseController
         if (session('role')) {
             return redirect()->to('beranda');
         }
-        return view('v-login', $data);
+        return view('home/v-login', $data);
     }
 
     public function loginProses()
@@ -134,7 +134,7 @@ class Home extends BaseController
             $this->db->update($userId, ['status' => 'tidak aktif']);
            
             $session->destroy();
-            return redirect()->to('/login')->with('success', 'Anda telah logout.');
+            return redirect()->to('/')->with('success', 'Anda telah logout.');
         }
     }
 
