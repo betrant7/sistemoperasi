@@ -19,6 +19,11 @@ $routes->get('/register', 'Register::index');
 $routes->add('/registerproses', 'Register::registerProses');
 
 $routes->get('/adminberanda', 'adminBeranda::index');
+$routes->get('/adminprofil', 'adminBeranda::profil');
+$routes->get('/editadminprofil', 'adminBeranda::editProfil');
+$routes->post('/editadminprofil/proses', 'adminBeranda::editProfilProses');
+$routes->get('/UbahPassword', 'adminBeranda::UbahPassword');
+$routes->post('/UbahPassword/proses', 'adminBeranda::UbahPasswordProses');
 
 $routes->get('/datamahasiswa', 'dataMahasiswa::index');
 $routes->get('/datamahasiswa/delete/(:num)', 'dataMahasiswa::deleteUser/$1');
@@ -67,3 +72,9 @@ $routes->post('/materi/selesai', 'Frondend\Materi::selesai');
 $routes->get('/materi/submateri/(:num)', 'Frondend\Materi::subMateri/$1');
 
 $routes->get('/console', 'console::getData');
+
+$routes->get('/profil', 'Frondend\Profil::index');
+$routes->get('/editprofil', 'Frondend\Profil::editProfil');
+$routes->post('/updateprofil', 'Frondend\Profil::updateProfil');
+$routes->get('/ubahPassword', 'Frondend\Profil::updatePassword'); 
+$routes->post('/ubahPassword/proses', 'Frondend\Profil::updatePasswordProses');

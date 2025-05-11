@@ -64,7 +64,7 @@
                     <div class="row">
                         <div>
                             <p class="copyright d-flex justify-content-end">
-                                © 2025, Team IT Politeknik Negeri Madiun
+                                © 2025, Politeknik Negeri Madiun
                             </p>
                         </div>
                     </div>

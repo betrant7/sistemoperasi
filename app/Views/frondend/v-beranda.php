@@ -1,4 +1,4 @@
-        <div class="container py-5 vh-100">
+        <div class="container py-5 dashboard">
             <div class="row align-items-center py-5 g-5">
                 <div class="col-12 col-md-6 align-items-start">
                     <img src="/img/OS.png" class="img-fluid"/>
@@ -71,15 +71,16 @@
                                 <a href="https://www.kali.org/docs/introduction/what-is-kali-linux/" target="_blank">Kali Linux</a>
                             </li>
                         </ul>
-                    </div>
+                    </div>                    
                     <div class="col-lg-4 col-sm-6">
-                        <h5 style="color: aliceblue;">Services</h5>
-                        <div class="line"></div>
-                        <ul>
+                        <h5 class="pb-1" style="color: aliceblue;">Fitur Utama</h5>
+                        <div class="line mt-1 mb-3"></div>
+                        <ul class="text-white">
                             <li>
-                                <a href="">AB</a>
-                                <a href="">BC</a>
-                                <a href="">CD</a>
+                                <a href="<?php echo base_url('/pilihos') ?>">Pilih OS</a>
+                            </li>
+                            <li>
+                                <a href="<?php echo base_url('/materi') ?>">Materi Pembelajaran</a>
                             </li>
                         </ul>
                     </div>
@@ -90,14 +91,28 @@
             <div class="container p-0">
                 <div class="row justify-content-between">
                     <div class="col-12">
-                        <p class="mb-0 fs-6">© 2025, Team IT Politeknik Negeri Madiun</p>
+                        <p class="mb-0 fs-6">© 2025, Politeknik Negeri Madiun</p>
                     </div>
                 </div>
             </div>
         </div>
     </footer>
-    <script src="/js/frondend.js"></script>
 
+    <div id="toastBackdrop" class="position-fixed top-0 start-0 w-100 h-100 d-none" style="z-index: 1050; backdrop-filter: blur(5px); background-color: rgba(0, 0, 0, 0.3);"></div>
+
+    <div class="position-fixed start-50 translate-middle-x p-3" style="top: 20px; z-index: 1055; min-width: 400px;">
+        <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-body">
+                <div id="toastMessage">Pesan akan muncul di sini.</div>
+                <div class="mt-2 pt-2 border-top d-flex justify-content-center gap-2">
+                    <a id="toastAction" href="#" class="btn btn-primary btn-sm">Take action</a>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="toast">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/frondend.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>

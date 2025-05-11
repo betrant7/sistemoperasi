@@ -10,6 +10,7 @@
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <link rel="stylesheet" type="text/css" href="/css/admin.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/2.2.2/css/dataTables.bootstrap5.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <script src="https://cdn.ckeditor.com/4.20.1/standard/ckeditor.js"></script>
 </head>
 <body>
@@ -67,7 +68,7 @@
                                 <span class="text-black small me-2">
                                     Hallo, <?php echo session()->get('namaLengkap') ?>
                                 </span>
-                                <img src="/img/logo.png" alt="Profile Image" class="rounded-circle" width="40" height="40">
+                                <a href="<?php echo base_url('/adminprofil')?>"><img src="/img/logo.png" alt="Profile Image" class="rounded-circle" width="40" height="40"></a>
                             </div>
                         </div>
                     </nav>

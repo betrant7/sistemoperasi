@@ -17,10 +17,10 @@
                                             <thead>
                                                 <tr class="text-center">
                                                     <th class="w-10">No</th>
-                                                    <th class="w-25">Kategori Materi</th>
-                                                    <th class="w-50">Judul Sub Materi</th>
-                                                    <th class="w-15">Status</th>
-                                                    <th class="w-10">Aksi</th>
+                                                    <th class="w-20">Kategori Materi</th>
+                                                    <th class="w-40">Judul Sub Materi</th>
+                                                    <th class="w-10">Status</th>
+                                                    <th class="w-20">Aksi</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -62,7 +62,7 @@
                         <div class="row">
                             <div>
                                 <p class="copyright d-flex justify-content-end">
-                                    © 2025, Team IT Politeknik Negeri Madiun
+                                    © 2025, Politeknik Negeri Madiun
                                 </p>
                             </div>
                         </div>

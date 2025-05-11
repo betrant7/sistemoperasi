@@ -27,7 +27,7 @@
 									</div>
 								</div>
 								<?php endif ?>
-								<form method="POST" class="my-login-validation" action="<?php echo base_url('/ubahPassword/proses') ?>">									
+								<form method="POST" class="my-login-validation" action="<?php echo base_url('/UbahPassword/proses') ?>">									
 									<div class="form-group password-container">
 										<span><strong>Password Lama</strong></span>
 										<span style="color:red">*</span>
@@ -50,7 +50,7 @@
 										<button type="submit" class="btn btn-primary btn-flat btn-block btn-login">Ubah</button>
 									</div>                                    
                                     <div class="form-group m-0">
-										<a class="btn btn-secondary btn-flat btn-block btn-login" href="<?php echo base_url('/login') ?>">Batal</a>
+										<a class="btn btn-secondary btn-flat btn-block btn-login" href="<?php echo base_url('/adminprofil') ?>">Batal</a>
 									</div>	
 								</form>
 							</div>

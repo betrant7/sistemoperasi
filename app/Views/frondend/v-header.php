@@ -9,7 +9,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/css/style.css"/>
+    <script>const baseUrl = "<?= base_url() ?>";</script>
 </head>
 <body>
     <div class="head-section d-flex">
@@ -22,17 +24,21 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item ms-0 ms-md-3">
-                            <a class="nav-link" href="<?php echo base_url('beranda') ?>">Beranda</a>
+                            <?php if (session()->get('idUser')): ?>
+                                <a class="nav-link" href="<?php echo base_url('beranda') ?>">Beranda</a>
+                            <?php else: ?>
+                                <a class="nav-link" href="<?php echo base_url('/') ?>">Beranda</a>
+                            <?php endif; ?>
                         </li>
                         <li class="nav-item ms-0 ms-md-3">
                             <?php if (session()->get('idUser')): ?>
                                 <?php if (session()->get('isDataComplete')): ?>
                                     <a class="nav-link" href="<?= base_url('pilihos') ?>">Pilihan OS</a>
                                 <?php else: ?>
-                                    <a class="nav-link" href="<?= base_url('lengkapidata?redirect=pilihos') ?>" onclick="alert('Silakan lengkapi data Anda terlebih dahulu!')">Pilih OS</a>
+                                    <a class="nav-link" href="<?= base_url('lengkapidata?redirect=pilihos') ?>" data-toast="lengkapi-data">Pilih OS</a>
                                 <?php endif; ?>
                             <?php else: ?>
-                                <a class="nav-link" href="<?= base_url('login') ?>" onclick="alert('Silakan login terlebih dahulu!')">Pilih OS</a>
+                                <a class="nav-link" href="<?= base_url('login') ?>" data-toast="login-dulu">Pilih OS</a>
                             <?php endif; ?>
                         </li>
                         <li class="nav-item ms-0 ms-md-3">
@@ -40,15 +46,21 @@
                                 <?php if (session()->get('isDataComplete')): ?>
                                     <a class="nav-link" href="<?= base_url('materi') ?>">Materi</a>
                                 <?php else: ?>
-                                    <a class="nav-link" href="<?= base_url('lengkapidata?redirect=materi') ?>" onclick="alert('Silakan lengkapi data Anda terlebih dahulu!')">Materi</a>
+                                    <a class="nav-link" href="<?= base_url('lengkapidata?redirect=materi') ?>" data-toast="lengkapi-data">Materi</a>
                                 <?php endif; ?>
                             <?php else: ?>
-                                <a class="nav-link" href="<?= base_url('login') ?>" onclick="alert('Silakan login terlebih dahulu!')">Materi</a>
+                                <a class="nav-link" href="<?= base_url('login') ?>" data-toast="login-dulu">Materi</a>
                             <?php endif; ?>
                         </li>
                         <li class="nav-item dropdown ms-0 ms-md-3">
                             <?php if (session()->get('idUser')): ?>
-                                <a class="nav-link" href="<?= base_url('frondend/logout') ?>">Logout</a>
+                                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Akun
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <li><a class="dropdown-item" href="<?= base_url('profil') ?>">Profil</a></li>
+                                    <li><a class="dropdown-item" href="<?= base_url('frondend/logout') ?>">Logout</a></li>
+                                </ul>
                             <?php else: ?>
                                 <a class="nav-link" href="<?= base_url('login') ?>">Login</a>
                             <?php endif; ?>

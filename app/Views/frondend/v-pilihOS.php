@@ -123,13 +123,14 @@
                         </ul>
                     </div>
                     <div class="col-lg-4 col-sm-6">
-                        <h5 style="color: aliceblue;">Services</h5>
-                        <div class="line"></div>
-                        <ul>
+                        <h5 class="pb-1" style="color: aliceblue;">Fitur Utama</h5>
+                        <div class="line mt-1 mb-3"></div>
+                        <ul class="text-white">
                             <li>
-                                <a href="">AB</a>
-                                <a href="">BC</a>
-                                <a href="">CD</a>
+                                <a href="<?php echo base_url('/pilihos') ?>">Pilih OS</a>
+                            </li>
+                            <li>
+                                <a href="<?php echo base_url('/materi') ?>">Materi Pembelajaran</a>
                             </li>
                         </ul>
                     </div>
@@ -140,7 +141,7 @@
             <div class="container p-0">
                 <div class="row justify-content-between">
                     <div class="col-12">
-                        <p class="mb-0 fs-6">© 2025, Team IT Politeknik Negeri Madiun</p>
+                        <p class="mb-0 fs-6">© 2025, Politeknik Negeri Madiun</p>
                     </div>
                 </div>
             </div>
