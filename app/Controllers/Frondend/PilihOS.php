@@ -41,6 +41,9 @@ class PilihOS extends BaseController
                 $ticketResponse = proxmox_post('nodes/server/qemu/' . $vmData['idVmProxmox'] . '/vncproxy', [], $auth);
                 if (isset($ticketResponse['data'])) {
                     $ticket = $ticketResponse['data']['ticket'];
+                    if (isset($ticketResponse['data']['port'])) {
+                        $wsport = $ticketResponse['data']['port'];
+                    }
                 }
             }
         }
@@ -49,7 +52,8 @@ class PilihOS extends BaseController
             'vmList' => $vmList,
             'vmData' => $vmData ?? null,
             'vmDetails' => $vmDetails,
-            'ticket' => $ticket
+            'ticket' => $ticket,
+            'wsport' => $wsport
         ];
 
         echo view('frondend/v-header');
@@ -124,9 +128,6 @@ class PilihOS extends BaseController
                 'net0' => 'virtio,bridge=vmbr0,firewall=1',
                 'scsi0' => 'local:32,format=qcow2,iothread=on',
                 'scsihw' => 'virtio-scsi-single',
-                'vga' => 'std',
-                'serial0' => 'socket',
-                'boot' => 'order=scsi0;ide2;net0',
             ];
 
             $createVM = proxmox_post('nodes/server/qemu', $postData, $auth);

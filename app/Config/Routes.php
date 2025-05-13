@@ -49,7 +49,7 @@ $routes->post('/laporan/getprogres', 'laporanProgres::getProgres');
 $routes->get('/laporan/detail/(:num)', 'laporanProgres::detail/$1');
 
 $routes->get('/proxmox', 'ProxmoxConsole::login');
-
+$routes->get('/proxmox/vncproxy', 'ProxmoxConsole::vncproxy');
 $routes->get('/beranda', 'Frondend\Beranda::index');
 
 $routes->get('/frondend/logout', 'Frondend\Beranda::logout');
@@ -70,8 +70,6 @@ $routes->post('/materi/upprogres', 'Frondend\Materi::updateProgres');
 $routes->post('/materi/downprogres', 'Frondend\Materi::downProgres');
 $routes->post('/materi/selesai', 'Frondend\Materi::selesai');
 $routes->get('/materi/submateri/(:num)', 'Frondend\Materi::subMateri/$1');
-
-$routes->get('/console', 'console::getData');
 
 $routes->get('/profil', 'Frondend\Profil::index');
 $routes->get('/editprofil', 'Frondend\Profil::editProfil');

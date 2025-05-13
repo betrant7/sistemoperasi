@@ -36,8 +36,8 @@
                             <div class="card-body">
                                 <h6 class="card-title">Console Access</h6>
                                 <?php if($ticket): ?>
-                                <iframe 
-                                    src="<?= base_url('noVNC/vnc.html?host=' . $_SERVER['SERVER_NAME'] . '&port=6081&path=api2/json/nodes/server/qemu/' . $vmData['idVmProxmox'] . '/vncproxy&ticket=' . urlencode($ticket)) ?>"
+                                <iframe
+                                    src="<?= base_url('noVNC/vnc.html') ?>?host=<?= $_SERVER['SERVER_NAME'] ?>&path=websockify?port=<?= $wsport ?>&autoconnect=true&password=<?= urlencode($ticket) ?>"
                                     width="100%" 
                                     height="600px" 
                                     frameborder="0"
