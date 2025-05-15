@@ -35,20 +35,19 @@
                         <div class="card mb-3">
                             <div class="card-body">
                                 <h6 class="card-title">Console Access</h6>
-                                <?php if($ticket): ?>
-                                <iframe
-                                    src="<?= base_url('noVNC/vnc.html') ?>?host=<?= $_SERVER['SERVER_NAME'] ?>&path=websockify?port=<?= $wsport ?>&autoconnect=true&password=<?= urlencode($ticket) ?>"
-                                    width="100%" 
-                                    height="600px" 
-                                    frameborder="0"
-                                    allow="fullscreen">
-                                </iframe>
-                                <?php else: ?>
+                                <?php if($vmData['status'] == 'aktif'): ?>
+                                    <iframe 
+                                        src="<?= base_url('proxmox/iframeconsole/' . $vmData['idVmProxmox']) ?>" 
+                                        width="100%" 
+                                        height="600px" 
+                                        frameborder="0"
+                                        allow="fullscreen">
+                                    </iframe>
                                 <div class="alert alert-warning">
-                                    Unable to establish VNC connection. Please check if:
+                                    Unable to establish console connection. Please check if:
                                     <ul>
                                         <li>The VM is running</li>
-                                        <li>VNC service is enabled on Proxmox</li>
+                                        <li>VM status is active</li>
                                         <li>Network connectivity between client and server</li>
                                     </ul>
                                 </div>
@@ -58,6 +57,7 @@
 
                         <?php if($vmData['status'] == 'aktif'): ?>
                             <a href="<?= base_url('pilihos/stopvm') ?>" class="btn btn-danger mt-3">Stop VM</a>
+                            <a href="<?= base_url('console/' . $vmData['idVmProxmox']) ?>" class="btn btn-primary mt-3" target="_blank">Buka Console VM</a>
                         <?php endif; ?>
                     </div>
                 <?php else: ?>

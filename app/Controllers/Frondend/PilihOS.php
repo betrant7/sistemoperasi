@@ -53,7 +53,6 @@ class PilihOS extends BaseController
             'vmData' => $vmData ?? null,
             'vmDetails' => $vmDetails,
             'ticket' => $ticket,
-            'wsport' => $wsport
         ];
 
         echo view('frondend/v-header');
