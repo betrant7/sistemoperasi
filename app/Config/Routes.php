@@ -78,4 +78,5 @@ $routes->get('/ubahPassword', 'Frondend\Profil::updatePassword');
 $routes->post('/ubahPassword/proses', 'Frondend\Profil::updatePasswordProses');
 
 $routes->get('/console/(:num)', 'ProxmoxConsole::redirectConsole/$1');
-$routes->get('/proxmox/iframeconsole/(:num)', 'ProxmoxConsole::iframeConsole/$1');
+$routes->get('/proxmoxconsole/iframeconsole/(:num)', 'ProxmoxConsole::iframeConsole/$1');
+$routes->get('/proxmoxconsole/novnc/(:num)', 'ProxmoxConsole::novnc/$1');

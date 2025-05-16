@@ -37,7 +37,7 @@
                                 <h6 class="card-title">Console Access</h6>
                                 <?php if($vmData['status'] == 'aktif'): ?>
                                     <iframe 
-                                        src="<?= base_url('proxmox/iframeconsole/' . $vmData['idVmProxmox']) ?>" 
+                                        src="<?= base_url('proxmoxconsole/novnc/' . $vmData['idVmProxmox']) ?>" 
                                         width="100%" 
                                         height="600px" 
                                         frameborder="0"
