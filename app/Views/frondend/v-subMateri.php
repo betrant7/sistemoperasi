@@ -21,50 +21,43 @@
             <div class="col-8">
                 <div class="card" style="border: none;">
                     <div class="card-body">
-                        <iframe 
-                            src="https://203.194.112.201:8006/?console=kvm&novnc=1&vmid=100&vmname=coba&node=server&resize=scale" 
-                            width="100%" 
-                            height="600px" 
-                            frameborder="0">
-                        </iframe>
+                        <?php if (!empty($vmData)): ?>
+                            <div class="mb-4">
+                                <div class="card mb-3" style="border: none;">
+                                    <div class="card-body">
+                                        <?php if($vmData['status'] == 'aktif'): ?>
+                                            <iframe src="<?= $novnc_url ?>" width="100%" height="600px" frameborder="0" allow="fullscreen"></iframe>                                
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <div class="alert alert-info">
+                                Please select an operating system below to create your virtual machine.
+                            </div>
+                        <?php endif; ?>
                         <p class="mb-0 p-4 pb-0">Select OS :</p>
-                        <div class="row mb-4 justify-content-center">
-                            <div class="col-2">
-                                <div class="card text-center">
-                                    <div class="card-body">
-                                        <img src="/img/debian.svg" class="w-100 mb-3">
-                                        <button class="btn btn-primary" style="width: 70%;">Pilih</button>
+                        <?php
+                            $osList = [
+                                'debian' => '/img/debian.svg',
+                                'ubuntu' => '/img/ubuntu.svg',
+                                'centos' => '/img/centos.svg',
+                                'kalilinux' => '/img/kalilinux.svg',
+                            ];
+                        ?>
+                        <div class="row mb-4 justify-content-center g-4">
+                            <?php foreach ($osList as $osName => $osImage) : ?>
+                                <div class="col-6 col-md-2">
+                                    <div class="card text-center h-100">
+                                        <div class="card-body d-flex flex-column align-items-center">
+                                            <img src="<?= $osImage ?>" class="w-100 mb-3" alt="<?= ucfirst($osName) ?>">
+                                            <h6 class="mb-2"><?= ucfirst($osName) ?></h6>
+                                            <a href="<?= base_url('materi/cekvm/' . $osName . '/' . $idMateri) ?>" class="btn btn-primary mt-auto" style="width: 70%;">Pilih</a>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-1"></div>
-                            <div class="col-2 pr-0">
-                                <div class="card text-center">
-                                    <div class="card-body">
-                                        <img src="/img/ubuntu.svg" class="w-100 mb-3">
-                                        <button class="btn btn-primary" style="width: 70%;">Pilih</button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-1 p-0"></div>
-                            <div class="col-2">
-                                <div class="card text-center">
-                                    <div class="card-body">
-                                        <img src="/img/centos.svg" class="w-100 mb-3">
-                                        <button class="btn btn-primary" style="width: 70%;">Pilih</button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-1"></div>
-                            <div class="col-2">
-                                <div class="card text-center">
-                                    <div class="card-body">
-                                        <img src="/img/kalilinux.svg" class="w-100 mb-3">
-                                        <button class="btn btn-primary" style="width: 70%;">Pilih</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                            <?php endforeach; ?>
+                        </div>                
                     </div>
                 </div>
             </div>

@@ -2,7 +2,7 @@
 
 namespace App\Controllers;
 
-use App\Models\MasterVM;
+use App\Models\masterVM;
 
 class ProxmoxConsole extends BaseController
 {
@@ -10,7 +10,7 @@ class ProxmoxConsole extends BaseController
 
     public function __construct()
     {
-        $this->vmModel = new MasterVM();
+        $this->vmModel = new masterVM();
     }
     public function login()
     {

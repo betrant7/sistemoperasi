@@ -66,11 +66,11 @@ $routes->get('/pilihos/stopvm', 'Frondend\PilihOS::stopVM');
 
 $routes->get('/materi', 'Frondend\Materi::index');
 $routes->get('/materi/pilih/(:num)', 'Frondend\Materi::pilihMateri/$1');
-$routes->post('/materi/upprogres', 'Frondend\Materi::updateProgres');
-$routes->post('/materi/downprogres', 'Frondend\Materi::downProgres');
-$routes->post('/materi/selesai', 'Frondend\Materi::selesai');
-$routes->get('/materi/submateri/(:num)', 'Frondend\Materi::subMateri/$1');
-
+$routes->post('/materi/upprogres', 'Frondend\subMateri::updateProgres');
+$routes->post('/materi/downprogres', 'Frondend\subMateri::downProgres');
+$routes->post('/materi/selesai', 'Frondend\subMateri::selesai');
+$routes->get('/materi/submateri/(:num)', 'Frondend\subMateri::subMateri/$1');
+$routes->get('/materi/cekvm/(:any)/(:num)', 'Frondend\subMateri::cekVM/$1/$2');
 $routes->get('/profil', 'Frondend\Profil::index');
 $routes->get('/editprofil', 'Frondend\Profil::editProfil');
 $routes->post('/updateprofil', 'Frondend\Profil::updateProfil');

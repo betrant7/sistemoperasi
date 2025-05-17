@@ -2,18 +2,26 @@
 
 namespace App\Controllers\Frondend;
 use App\Controllers\BaseController;
+use App\Models\laporanPembelajaran;
+use App\Models\masterMateri;
+use App\Models\masterSubMateri;
 use App\Models\masterVM;
 
-class PilihOS extends BaseController
+class SubMateri extends BaseController
 {
+    protected $materi;
+    protected $subMateri;
+    protected $progres;
     protected $vmModel;
-
     public function __construct()
     {
+        $this->materi = new masterMateri();
+        $this->subMateri = new masterSubMateri();
+        $this->progres = new laporanPembelajaran();
         $this->vmModel = new masterVM();
     }
 
-    public function index()
+    public function subMateri($idMateri)
     {
         $auth = proxmox_login();
         $vmList = [];
@@ -47,8 +55,9 @@ class PilihOS extends BaseController
                 }
             }
         }
-
-        // Tambahkan logika noVNC jika VM aktif
+        // Integrasi logika VM dan noVNC dari PilihOS
+        $userId = session()->get('idUser');
+        $vmData = $this->vmModel->getActiveVMsByUserId($userId);
         $novnc_url = null;
         if (!empty($vmData) && $vmData['status'] == 'aktif') {
             $node = $vmData['node'] ?? 'server';
@@ -58,9 +67,7 @@ class PilihOS extends BaseController
                 if (isset($vnc['data']['ticket']) && isset($vnc['data']['port'])) {
                     $ticket = $vnc['data']['ticket'];
                     $vnc_port = $vnc['data']['port'];
-                    // Cari port websockify yang belum dipakai (misal: 6100-6200)
                     $ws_port = $this->findAvailablePort(6100, 6200);
-                    // Jalankan websockify secara background (pastikan path dan user benar)
                     $cmd = "nohup websockify --web /var/www/html/sistemoperasi/public/noVNC --cert=/etc/letsencrypt/live/ujicobavps.cloud/fullchain.pem --key=/etc/letsencrypt/live/ujicobavps.cloud/privkey.pem $ws_port 203.194.112.201:$vnc_port > /tmp/websockify_$ws_port.log 2>&1 &";
                     exec($cmd);
                     $novnc_url = base_url("noVNC/vnc.html?host=ujicobavps.cloud&port=$ws_port&autoconnect=1&password=$ticket");
@@ -68,18 +75,21 @@ class PilihOS extends BaseController
             }
         }
         $data = [
+            'submateri' => $this->subMateri->where('idMateri', $idMateri)->findAll(),
+            'materi' => $this->materi->where('idMateri', $idMateri)->first(),
+            'idMateri' => $idMateri,
+            'vmData' => $vmData,
+            'novnc_url' => $novnc_url,
             'vmList' => $vmList,
-            'vmData' => $vmData ?? null,
             'vmDetails' => $vmDetails,
             'ticket' => $ticket,
-            'novnc_url' => $novnc_url,
         ];
 
         echo view('frondend/v-header');
-        return view('frondend/v-pilihOS', $data);
+        return view('frondend/v-subMateri', $data);
     }
 
-    public function createVM($os)
+    public function cekVM($os, $idMateri)
     {
         $userId = session()->get('idUser'); // Ambil ID user dari session
         $vmData = $this->vmModel->getVMByUserIdAndJenisVM($userId, $os);
@@ -93,20 +103,36 @@ class PilihOS extends BaseController
             $result = proxmox_post('nodes/server/qemu/' . $activeVM['idVmProxmox'] . '/status/stop', $postData, $auth);
             if ($result) {
                 $this->vmModel->updateVMStatus($activeVM['idVM'], 'nonaktif');
+                // Tambahkan delay untuk memastikan VM benar-benar berhenti
+                sleep(2);
             }
         }
 
         // Jika user sudah memiliki VM dengan OS yang dipilih
         if ($vmData) {
             $auth = proxmox_login(); // Login ke Proxmox
-            $postData = []; // Data yang diperlukan untuk start VM
-            $result = proxmox_post('nodes/server/qemu/' . $vmData['idVmProxmox'] . '/status/start', $postData, $auth);
+            
+            // Cek status VM di Proxmox sebelum mencoba start
+            $vmStatusResponse = proxmox_get('nodes/server/qemu/' . $vmData['idVmProxmox'] . '/status/current', $auth);
+            $vmStatus = isset($vmStatusResponse['data']['status']) ? $vmStatusResponse['data']['status'] : '';
+            
+            // Hanya start VM jika statusnya bukan 'running'
+            if ($vmStatus != 'running') {
+                $postData = []; // Data yang diperlukan untuk start VM
+                $result = proxmox_post('nodes/server/qemu/' . $vmData['idVmProxmox'] . '/status/start', $postData, $auth);
 
-            if ($result) {
-                // Update status VM ke 'aktif'
+                if ($result) {
+                    // Update status VM ke 'aktif'
+                    $this->vmModel->updateVMStatus($vmData['idVM'], 'aktif');
+                    // Tambahkan delay untuk memastikan VM benar-benar start
+                    sleep(2);
+                }
+            } else {
+                // VM sudah running, pastikan status di database juga 'aktif'
                 $this->vmModel->updateVMStatus($vmData['idVM'], 'aktif');
             }
-            return redirect()->to('/pilihos');
+            
+            return redirect()->to('materi/submateri/' . $idMateri);
         }
 
         // Jika belum punya VM, buat VM baru
@@ -160,6 +186,9 @@ class PilihOS extends BaseController
                     'jenisVM' => $os,
                 ]);
 
+                // Tambahkan delay untuk memastikan VM benar-benar dibuat
+                sleep(3);
+
                 // Langsung nyalakan VM setelah dibuat
                 $vmData = $this->vmModel->getVMByUserId($userId);
 
@@ -171,38 +200,121 @@ class PilihOS extends BaseController
                     if ($result) {
                         // Update status VM ke 'aktif'
                         $this->vmModel->updateVMStatus($vmData['idVM'], 'aktif');
+                        // Tambahkan delay untuk memastikan VM benar-benar start
+                        sleep(2);
                     }
-                    return redirect()->to('/pilihos');
+                    return redirect()->to('materi/submateri/' . $idMateri);
                 }
 
             } else {
                 echo "Gagal membuat VM. Error: " . json_encode($createVM);
             }
         }
-        return redirect()->to('/pilihos');
+        return redirect()->to('materi/submateri/' . $idMateri);
     }
 
-    // Fungsi untuk mematikan VM
-    public function stopVM()
+    public function downProgres()
     {
-        $userId = session()->get('idUser');
-        $vmData = $this->vmModel->getVMByUserId($userId);
+        $data = $this->request->getJSON();
 
-        if ($vmData) {
-            $auth = proxmox_login(); // Login ke Proxmox
-            $postData = []; // Data yang diperlukan untuk stop VM
-            $result = proxmox_post('nodes/server/qemu/' . $vmData['idVmProxmox'] . '/status/stop', $postData, $auth);
+        // Get total submateri count for this materi
+        $totalSubmateri = $this->subMateri->where('idMateri', $data->idMateri)->countAllResults();
 
-            if ($result) {
-                // Update status VM ke 'nonaktif'
-                $this->vmModel->updateVMStatus($vmData['idVM'], 'nonaktif');
+        // Calculate progress percentage for each submateri
+        $progressPerSubmateri = 100 / $totalSubmateri;
+
+        // Check if record exists for this user and materi
+        $existing = $this->progres->where('idUser', $data->idUser)
+            ->where('idMateri', $data->idMateri)
+            ->first();
+
+        if ($existing) {
+            // Update existing record with decremented progress
+            $newProgress = $existing['progres'] - $progressPerSubmateri;
+            if ($newProgress < 0) {
+                $newProgress = 0;
             }
+
+            $this->progres->update($existing['idlaporanPembelajaran'], [
+                'idSubMateri' => $data->idSubMateri,
+                'progres' => round($newProgress),
+            ]);
+
+            $totalProgress = round($newProgress);
         }
 
-        return redirect()->to('/pilihos');
+        return $this->response->setJSON([
+            'status' => 'ok',
+            'progress' => $totalProgress
+        ]);
     }
 
-    // Fungsi untuk mencari port kosong
+    public function updateProgres()
+    {
+        $data = $this->request->getJSON();
+
+        // Get total submateri count for this materi
+        $totalSubmateri = $this->subMateri->where('idMateri', $data->idMateri)->countAllResults();
+
+        // Calculate progress percentage for each submateri
+        $progressPerSubmateri = 100 / $totalSubmateri;
+
+        // Check if record exists for this user and materi
+        $existing = $this->progres->where('idUser', $data->idUser)
+            ->where('idMateri', $data->idMateri)
+            ->first();
+
+        if ($existing) {
+            // Update existing record with incremented progress
+            $newProgress = $existing['progres'] + $progressPerSubmateri;
+            if ($newProgress > 100) {
+                $newProgress = 100;
+            }
+
+            $this->progres->update($existing['idlaporanPembelajaran'], [
+                'idSubMateri' => $data->idSubMateri,
+                'progres' => round($newProgress),
+            ]);
+
+            $totalProgress = round($newProgress);
+        } else {
+            // Insert first record for this materi
+            $this->progres->insert([
+                'idUser' => $data->idUser,
+                'idMateri' => $data->idMateri,
+                'idSubMateri' => $data->idSubMateri,
+                'progres' => round($progressPerSubmateri),
+                'waktuMulai' => date('Y-m-d H:i:s')
+            ]);
+
+            $totalProgress = round($progressPerSubmateri);
+        }
+
+        return $this->response->setJSON([
+            'status' => 'ok',
+            'progress' => $totalProgress
+        ]);
+    }
+
+    public function selesai()
+    {
+        $data = $this->request->getJSON();
+
+        // Update progress to 100%
+        $existing = $this->progres->where('idUser', $data->idUser)
+            ->where('idMateri', $data->idMateri)
+            ->first();
+
+        if ($existing && !$existing['waktuSelesai']) {
+            $this->progres->update($existing['idlaporanPembelajaran'], [
+                'progres' => 100,
+                'waktuSelesai' => date('Y-m-d H:i:s', strtotime('+7 hours'))
+            ]);
+        }
+        // Redirect back to materi page
+        return redirect()->to('/materi');
+    }
+
     private function findAvailablePort($start, $end)
     {
         for ($port = $start; $port <= $end; $port++) {

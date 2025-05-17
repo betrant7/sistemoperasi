@@ -4,61 +4,13 @@
             <div class="card-body">
                 <?php if (!empty($vmData)): ?>
                     <div class="mb-4">
-                        <h5>Virtual Machine Status:</h5>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="card mb-3">
-                                    <div class="card-body">
-                                        <h6 class="card-title">Basic Information</h6>
-                                        <p class="mb-1">VM ID: <?= $vmData['idVmProxmox'] ?></p>
-                                        <p class="mb-1">Status: <span class="badge <?= $vmData['status'] == 'aktif' ? 'bg-success' : 'bg-danger' ?>"><?= ucfirst($vmData['status']) ?></span></p>
-                                        <p class="mb-1">Node: <?= $vmData['node'] ?></p>
-                                        <p class="mb-1">OS Type: <?= ucfirst($vmData['jenisVM']) ?></p>
-                                    </div>
-                                </div>
-                            </div>
-                            <?php if (!empty($vmDetails)): ?>
-                            <div class="col-md-6">
-                                <div class="card mb-3">
-                                    <div class="card-body">
-                                        <h6 class="card-title">Resource Usage</h6>
-                                        <p class="mb-1">CPU Usage: <?= number_format($vmDetails['cpu'] ?? 0, 2) ?>%</p>
-                                        <p class="mb-1">Memory Usage: <?= number_format(($vmDetails['mem'] ?? 0) / 1024 / 1024, 2) ?> GB</p>
-                                        <p class="mb-1">Disk Usage: <?= number_format(($vmDetails['disk'] ?? 0) / 1024 / 1024, 2) ?> GB</p>
-                                        <p class="mb-1">Uptime: <?= isset($vmDetails['uptime']) ? gmdate("H:i:s", $vmDetails['uptime']) : 'N/A' ?></p>
-                                    </div>
-                                </div>
-                            </div>
-                            <?php endif; ?>
-                        </div>
-                        
-                        <div class="card mb-3">
+                        <div class="card mb-3" style="border: none;">
                             <div class="card-body">
-                                <h6 class="card-title">Console Access</h6>
                                 <?php if($vmData['status'] == 'aktif'): ?>
-                                    <iframe 
-                                        src="<?= base_url('proxmoxconsole/novnc/' . $vmData['idVmProxmox']) ?>" 
-                                        width="100%" 
-                                        height="600px" 
-                                        frameborder="0"
-                                        allow="fullscreen">
-                                    </iframe>
-                                <div class="alert alert-warning">
-                                    Unable to establish console connection. Please check if:
-                                    <ul>
-                                        <li>The VM is running</li>
-                                        <li>VM status is active</li>
-                                        <li>Network connectivity between client and server</li>
-                                    </ul>
-                                </div>
+                                    <iframe src="<?= $novnc_url ?>" width="100%" height="600px" frameborder="0" allow="fullscreen"></iframe>                                
                                 <?php endif; ?>
                             </div>
                         </div>
-
-                        <?php if($vmData['status'] == 'aktif'): ?>
-                            <a href="<?= base_url('pilihos/stopvm') ?>" class="btn btn-danger mt-3">Stop VM</a>
-                            <a href="<?= base_url('console/' . $vmData['idVmProxmox']) ?>" class="btn btn-primary mt-3" target="_blank">Buka Console VM</a>
-                        <?php endif; ?>
                     </div>
                 <?php else: ?>
                     <div class="alert alert-info">
@@ -80,6 +32,7 @@
                             <div class="card text-center h-100">
                                 <div class="card-body d-flex flex-column align-items-center">
                                     <img src="<?= $osImage ?>" class="w-100 mb-3" alt="<?= ucfirst($osName) ?>">
+                                    <h6 class="mb-2"><?= ucfirst($osName) ?></h6>
                                     <a href="<?= base_url('pilihos/createvm/' . $osName) ?>" class="btn btn-primary mt-auto" style="width: 70%;">Pilih</a>
                                 </div>
                             </div>
