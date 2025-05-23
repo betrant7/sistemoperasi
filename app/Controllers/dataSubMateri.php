@@ -33,17 +33,48 @@ class DataSubMateri extends BaseController
         return view('subMateri/v-tambahSubMateri', $data);
     }
 
+    // public function tambahSubProses()
+    // {
+    //     $idMateri = $this->request->getPost('idMateri');
+
+    //     $this->subMateri->insert([
+    //         'idMateri' => $idMateri,
+    //         'judulMateri' => $this->request->getPost('judulMateri'),
+    //         'dataMateri' => $this->request->getPost('dataMateri'),
+    //     ]);
+
+    //     return redirect()->to('datasubmateri/' . $idMateri)->with('success', 'Materi berhasil ditambahkan.');
+    // }
+
     public function tambahSubProses()
     {
         $idMateri = $this->request->getPost('idMateri');
+        $judulMateri = $this->request->getPost('judulMateri');
+        $file = $this->request->getFile('dataMateri');
 
-        $this->subMateri->insert([
-            'idMateri' => $idMateri,
-            'judulMateri' => $this->request->getPost('judulMateri'),
-            'dataMateri' => $this->request->getPost('dataMateri'),
-        ]);
+        if ($file && $file->isValid() && !$file->hasMoved()) {
+            // Pastikan file bertipe PDF
+            if ($file->getClientExtension() !== 'pdf') {
+                return redirect()->back()->with('error', 'Hanya file PDF yang diperbolehkan.');
+            }
 
-        return redirect()->to('datasubmateri/' . $idMateri)->with('success', 'Materi berhasil ditambahkan.');
+            // Buat nama acak agar tidak bentrok
+            $newName = $file->getRandomName();
+
+            // Simpan file ke folder public/materipdf
+            $file->move('materipdf', $newName);
+
+            // Simpan data ke database
+            $this->subMateri->insert([
+                'idMateri' => $idMateri,
+                'judulMateri' => $judulMateri,
+                'dataMateri' => $newName // Simpan nama file saja
+            ]);
+
+            return redirect()->to('datasubmateri/' . $idMateri)->with('success', 'Materi berhasil ditambahkan.');
+        } else {
+            return redirect()->back()->with('error', 'Gagal mengunggah file.');
+        }
     }
 
     public function updateSub($idSubMateri)

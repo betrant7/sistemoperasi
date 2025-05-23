@@ -7,7 +7,7 @@
                         <?php foreach ($submateri as $k => $item) : ?>
                             <div class="submateri-content" id="submateri-<?= $k; ?>" style="<?= $k === 0 ? '' : 'display: none;' ?>">
                                 <h5><?= $item['judulMateri']; ?></h5>
-                                <p><?= $item['dataMateri']; ?></p>
+                                <embed src="<?= base_url('materipdf/' . $item['dataMateri']); ?>" type="application/pdf" width="100%" height="600px">
                             </div>
                         <?php endforeach; ?>
                         <div class="d-flex justify-content-between mt-3">

@@ -3,7 +3,7 @@
                         <h2>Tambah Data Sub Materi</h2>
                         <div class="card">
                             <div class="card-body">
-                                <form method="POST" class="my-login-validation" action="<?php echo base_url('datasubmateri/tambah/tambahproses') ?>">
+                                <form method="POST" enctype="multipart/form-data" class="my-login-validation" action="<?php echo base_url('datasubmateri/tambah/tambahproses') ?>">
                                     <div class="row">
                                         <div class="col">
                                         <input type="hidden" name="idMateri" value="<?= $idMateri; ?>">
@@ -15,7 +15,8 @@
                                             <div class="form-group">
                                                 <span><strong>Data Materi</strong></span>
                                                 <span style="color:red">*</span>
-                                                <textarea id="dataMateri" type="text" class="form-control" name="dataMateri" required placeholder="Masukkan Data Kategori"></textarea>
+                                                <input class="form-control" type="file" id="dataMateri" name="dataMateri" multiple>
+                                                <!-- <textarea id="dataMateri" type="text" class="form-control" name="dataMateri" required placeholder="Masukkan Data Kategori"></textarea> -->
                                             </div>
                                         </div>
                                     </div>
@@ -50,9 +51,9 @@
     <script src="https://cdn.datatables.net/2.2.2/js/dataTables.js"></script>
     <script src="https://cdn.datatables.net/2.2.2/js/dataTables.bootstrap5.js"></script>
 
-    <script src="/ckeditor/ckeditor.js"></script>
+    <!-- <script src="/ckeditor/ckeditor.js"></script>
     <script>
         CKEDITOR.replace( 'dataMateri' );
-    </script>
+    </script> -->
 </body>
 </html>
