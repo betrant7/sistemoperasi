@@ -22,7 +22,6 @@ class Materi extends BaseController
         $data = [
             'materi' => $this->materi->findAll(),
         ];
-        echo view('frondend/v-header');
         return view('frondend/v-materi', $data);
     }
 

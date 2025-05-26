@@ -75,7 +75,6 @@ class PilihOS extends BaseController
             'novnc_url' => $novnc_url,
         ];
 
-        echo view('frondend/v-header');
         return view('frondend/v-pilihOS', $data);
     }
 

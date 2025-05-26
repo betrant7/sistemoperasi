@@ -1,6 +1,6 @@
 /*
  * noVNC: HTML5 VNC client
- * Copyright (C) 2020 The noVNC authors
+ * Copyright (C) 2020 The noVNC Authors
  * Licensed under MPL 2.0 (see LICENSE.txt)
  *
  * See README.md for usage and integration instructions.
@@ -14,8 +14,9 @@ export default class Inflate {
         this.strm = new ZStream();
         this.chunkSize = 1024 * 10 * 10;
         this.strm.output = new Uint8Array(this.chunkSize);
+        this.windowBits = 5;
 
-        inflateInit(this.strm);
+        inflateInit(this.strm, this.windowBits);
     }
 
     setInput(data) {

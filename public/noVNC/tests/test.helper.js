@@ -1,3 +1,5 @@
+﻿const expect = chai.expect;
+
 import keysyms from '../core/input/keysymdef.js';
 import * as KeyboardUtil from "../core/input/util.js";
 
@@ -106,8 +108,6 @@ describe('Helpers', function () {
         });
         it('should use charCode if no key', function () {
             expect(KeyboardUtil.getKey({charCode: 'Š'.charCodeAt(), keyCode: 0x42, which: 0x43})).to.be.equal('Š');
-            // Broken Oculus browser
-            expect(KeyboardUtil.getKey({charCode: 'Š'.charCodeAt(), keyCode: 0x42, which: 0x43, key: 'Unidentified'})).to.be.equal('Š');
         });
         it('should return Unidentified when it cannot map the key', function () {
             expect(KeyboardUtil.getKey({keycode: 0x42})).to.be.equal('Unidentified');

@@ -55,6 +55,7 @@ function proxmox_post($endpoint, $postData, $auth)
 
     return json_decode($res, true);
 }
+
 function proxmox_get($endpoint, $auth)
 {
     $url = 'https://203.194.112.201:8006/api2/json/' . $endpoint;
@@ -120,5 +121,27 @@ function proxmox_open_console($node, $vmid, $auth)
     return [
         'status' => 'success',
         'url' => $consoleUrl
+    ];
+}
+
+function proxmox_delete_vm($node, $vmid, $auth)
+{
+    // Endpoint untuk menghapus VM
+    $endpoint = "nodes/{$node}/qemu/{$vmid}";
+    
+    // Request untuk menghapus VM
+    $response = proxmox_post($endpoint, ['purge' => 1], $auth);
+    
+    if (!isset($response['data'])) {
+        error_log('Failed to delete VM: ' . json_encode($response));
+        return [
+            'status' => 'error',
+            'message' => 'Gagal menghapus VM'
+        ];
+    }
+    
+    return [
+        'status' => 'success',
+        'message' => 'VM berhasil dihapus'
     ];
 }

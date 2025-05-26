@@ -1,5 +1,5 @@
 # SOME DESCRIPTIVE TITLE.
-# Copyright (C) 2018 The noVNC authors
+# Copyright (C) 2018 The noVNC Authors
 # This file is distributed under the same license as the noVNC package.
 # Baw Appie <pp121324@gmail.com>, 2018.
 #
@@ -78,7 +78,7 @@ msgid "Hide/Show the control bar"
 msgstr "컨트롤 바 숨기기/보이기"
 
 #: ../vnc.html:108
-msgid "Move/Drag viewport"
+msgid "Move/Drag Viewport"
 msgstr "움직이기/드래그 뷰포트"
 
 #: ../vnc.html:108
@@ -110,7 +110,7 @@ msgid "Keyboard"
 msgstr "키보드"
 
 #: ../vnc.html:126
-msgid "Show keyboard"
+msgid "Show Keyboard"
 msgstr "키보드 보이기"
 
 #: ../vnc.html:133
@@ -118,7 +118,7 @@ msgid "Extra keys"
 msgstr "기타 키들"
 
 #: ../vnc.html:133
-msgid "Show extra keys"
+msgid "Show Extra Keys"
 msgstr "기타 키들 보이기"
 
 #: ../vnc.html:138
@@ -202,19 +202,19 @@ msgid "Settings"
 msgstr "설정"
 
 #: ../vnc.html:204
-msgid "Shared mode"
+msgid "Shared Mode"
 msgstr "공유 모드"
 
 #: ../vnc.html:207
-msgid "View only"
+msgid "View Only"
 msgstr "보기 전용"
 
 #: ../vnc.html:211
-msgid "Clip to window"
+msgid "Clip to Window"
 msgstr "창에 클립"
 
 #: ../vnc.html:214
-msgid "Scaling mode:"
+msgid "Scaling Mode:"
 msgstr "스케일링 모드:"
 
 #: ../vnc.html:216
@@ -222,11 +222,11 @@ msgid "None"
 msgstr "없음"
 
 #: ../vnc.html:217
-msgid "Local scaling"
+msgid "Local Scaling"
 msgstr "로컬 스케일링"
 
 #: ../vnc.html:218
-msgid "Remote resizing"
+msgid "Remote Resizing"
 msgstr "원격 크기 조절"
 
 #: ../vnc.html:223
@@ -258,11 +258,11 @@ msgid "Path:"
 msgstr "위치:"
 
 #: ../vnc.html:251
-msgid "Automatic reconnect"
+msgid "Automatic Reconnect"
 msgstr "자동 재연결"
 
 #: ../vnc.html:254
-msgid "Reconnect delay (ms):"
+msgid "Reconnect Delay (ms):"
 msgstr "재연결 지연 시간 (ms)"
 
 #: ../vnc.html:260

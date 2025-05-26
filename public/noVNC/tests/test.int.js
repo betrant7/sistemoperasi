@@ -1,3 +1,6 @@
+/* eslint-disable no-console */
+const expect = chai.expect;
+
 import { toUnsigned32bit, toSigned32bit } from '../core/util/int.js';
 
 describe('Integer casting', function () {

@@ -1,6 +1,6 @@
 /*
  * noVNC: HTML5 VNC client
- * Copyright (C) 2021 The noVNC authors
+ * Copyright (C) 2021 The noVNC Authors
  * Licensed under MPL 2.0 (see LICENSE.txt)
  *
  * See README.md for usage and integration instructions.
@@ -32,7 +32,7 @@ export default class ZRLEDecoder {
             return false;
         }
 
-        const data = sock.rQshiftBytes(this._length, false);
+        const data = sock.rQshiftBytes(this._length);
 
         this._inflator.setInput(data);
 

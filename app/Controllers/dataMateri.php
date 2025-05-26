@@ -21,7 +21,6 @@ class DataMateri extends BaseController
         $data = [
             'materi' => $this->materi->getMateriGrouped(),
         ]; 
-        echo view('v-header');
         return view('materi/v-dataMateri', $data);
     }
 
@@ -46,7 +45,6 @@ class DataMateri extends BaseController
 
     public function tambah()
     {
-        echo view('v-header');
         return view('materi/v-tambahMateri');
     }
 
@@ -68,7 +66,6 @@ class DataMateri extends BaseController
         $data = [
             'materi' => $this->materi->getById($idMateri)->first(),
         ];
-        echo view('v-header');
         return view('materi/v-updateMateri', $data);
     }
     public function updateProses()

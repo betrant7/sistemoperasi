@@ -48,7 +48,6 @@ class LaporanProgres extends Controller
                 'waktuSelesai' => $latestProgress['waktuSelesai'] ?? null
             ];
         }
-        echo view('v-header');
         return view('v-laporanProgres', [
             'progres' => $progres,
             'materiList' => $materiList,

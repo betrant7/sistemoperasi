@@ -1,5 +1,5 @@
 # Polish translations for noVNC package.
-# Copyright (C) 2018 The noVNC authors
+# Copyright (C) 2018 The noVNC Authors
 # This file is distributed under the same license as the noVNC package.
 # Mariusz Jamro <mariusz.jamro@gmail.com>, 2017.
 #
@@ -108,7 +108,7 @@ msgid "Keyboard"
 msgstr "Klawiatura"
 
 #: ../vnc.html:124
-msgid "Show keyboard"
+msgid "Show Keyboard"
 msgstr "Pokaż klawiaturę"
 
 #: ../vnc.html:131
@@ -116,7 +116,7 @@ msgid "Extra keys"
 msgstr "Przyciski dodatkowe"
 
 #: ../vnc.html:131
-msgid "Show extra keys"
+msgid "Show Extra Keys"
 msgstr "Pokaż przyciski dodatkowe"
 
 #: ../vnc.html:136
@@ -220,11 +220,11 @@ msgid "None"
 msgstr "Brak"
 
 #: ../vnc.html:215
-msgid "Local scaling"
+msgid "Local Scaling"
 msgstr "Skalowanie lokalne"
 
 #: ../vnc.html:216
-msgid "Remote resizing"
+msgid "Remote Resizing"
 msgstr "Skalowanie zdalne"
 
 #: ../vnc.html:221
@@ -256,11 +256,11 @@ msgid "Path:"
 msgstr "Ścieżka:"
 
 #: ../vnc.html:249
-msgid "Automatic reconnect"
+msgid "Automatic Reconnect"
 msgstr "Automatycznie wznawiaj połączenie"
 
 #: ../vnc.html:252
-msgid "Reconnect delay (ms):"
+msgid "Reconnect Delay (ms):"
 msgstr "Opóźnienie wznawiania (ms):"
 
 #: ../vnc.html:258

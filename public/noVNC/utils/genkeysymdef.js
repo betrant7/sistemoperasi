@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * genkeysymdef: X11 keysymdef.h to JavaScript converter
- * Copyright (C) 2018 The noVNC authors
+ * Copyright (C) 2018 The noVNC Authors
  * Licensed under MPL 2.0 (see LICENSE.txt)
  */
 

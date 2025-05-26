@@ -85,7 +85,6 @@ class SubMateri extends BaseController
             'ticket' => $ticket,
         ];
 
-        echo view('frondend/v-header');
         return view('frondend/v-subMateri', $data);
     }
 

@@ -16,7 +16,6 @@ class Beranda extends BaseController
         $data = [
             'user' => $this->masterUser->getUser(),
         ];
-        echo view('frondend/v-header');
         return view('frondend/v-beranda', $data);
     }
     public function logout()

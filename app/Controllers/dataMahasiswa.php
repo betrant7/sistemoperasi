@@ -16,7 +16,6 @@ class DataMahasiswa extends BaseController
         $data = [
             'user' => $this->masterUser->getUser(),
         ];
-        echo view('v-header');
         return view('v-dataMahasiswa', $data);
     }
 

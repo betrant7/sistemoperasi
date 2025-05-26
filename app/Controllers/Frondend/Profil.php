@@ -16,7 +16,6 @@ class Profil extends BaseController
         $data = [
             'user' => $this->masterUser->find(session()->get('idUser')),
         ];
-        echo view('frondend/v-header');
         return view('frondend/v-user', $data);
     }
 

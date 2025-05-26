@@ -51,4 +51,12 @@ document.addEventListener("DOMContentLoaded", function () {
         toastBackdrop.classList.add('d-none');
         document.body.style.overflow = 'auto';
     });
+
+    window.confirmLogout = function () {
+        if (confirm('Apakah Anda yakin ingin logout?')) {
+            window.location.href = 'frondend/logout';
+        }
+    }
+
+    
 });

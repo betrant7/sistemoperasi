@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * ps2js: gettext .po to noVNC .js converter
- * Copyright (C) 2018 The noVNC authors
+ * Copyright (C) 2018 The noVNC Authors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,26 +17,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const { program } = require('commander');
+const getopt = require('node-getopt');
 const fs = require('fs');
-const pofile = require("pofile");
+const po2json = require("po2json");
 
-program
-    .argument('<input>')
-    .argument('<output>')
-    .parse(process.argv);
+const opt = getopt.create([
+    ['h', 'help', 'display this help'],
+]).bindHelp().parseSystem();
 
-let data = fs.readFileSync(program.args[0], "utf8");
-let po = pofile.parse(data);
+if (opt.argv.length != 2) {
+    console.error("Incorrect number of arguments given");
+    process.exit(1);
+}
 
-const bodyPart = po.items
-    .filter(item => item.msgid !== "")
-    .filter(item => item.msgstr[0] !== "")
-    .filter(item => !item.flags.fuzzy)
-    .filter(item => !item.obsolete)
-    .map(item => "    " + JSON.stringify(item.msgid) + ": " + JSON.stringify(item.msgstr[0]))
-    .join(",\n");
+const data = po2json.parseFileSync(opt.argv[0]);
+
+const bodyPart = Object.keys(data).filter(msgid => msgid !== "").map((msgid) => {
+    if (msgid === "") return;
+    const msgstr = data[msgid][1];
+    return "    " + JSON.stringify(msgid) + ": " + JSON.stringify(msgstr);
+}).join(",\n");
 
 const output = "{\n" + bodyPart + "\n}";
 
-fs.writeFileSync(program.args[1], output);
+fs.writeFileSync(opt.argv[1], output);

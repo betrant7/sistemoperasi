@@ -48,7 +48,7 @@
             <div class="sidebar-footer">
                 <ul>
                     <li>
-                        <a href="<?php echo base_url('logout') ?>">
+                        <a href="#" onclick="confirmLogout()">
                             <i class="fa fa-sign-out-alt"></i>
                             <span>Logout</span>
                         </a>
@@ -73,3 +73,28 @@
                         </div>
                     </nav>
                 </div>
+
+            <?= $this->renderSection('content'); ?>
+            </div>
+            <footer class="sticky-footer">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div>
+                            <p class="copyright d-flex justify-content-end">
+                                © 2025, Politeknik Negeri Madiun
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <script src="/js/admin.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/2.2.2/js/dataTables.js"></script>
+    <script src="https://cdn.datatables.net/2.2.2/js/dataTables.bootstrap5.js"></script>
+    
+</body>
+</html>

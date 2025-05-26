@@ -1,5 +1,8 @@
-    </div>
-    <div class="container my-5 pt-3">
+<?= $this->extend('frondend/v-template'); ?>
+
+<?= $this->Section('content'); ?>
+</div>
+    <div class="container my-5 pt-3 vh-100">
         <div class="row">
             <div class="col-md-3 my-5">
                 <div class="card shadow border-0 h-100">
@@ -54,6 +57,7 @@
             </div>
         </div>
     </div>
+<?= $this->endSection(''); ?>
 
     <!-- JavaScript Libraries -->
     <script src="/js/frondend.js"></script>

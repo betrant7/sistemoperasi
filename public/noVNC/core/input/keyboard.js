@@ -1,6 +1,6 @@
 /*
  * noVNC: HTML5 VNC client
- * Copyright (C) 2019 The noVNC authors
+ * Copyright (C) 2019 The noVNC Authors
  * Licensed under MPL 2.0 or any later version (see LICENSE.txt)
  */
 
@@ -36,7 +36,7 @@ export default class Keyboard {
 
     // ===== PRIVATE METHODS =====
 
-    _sendKeyEvent(keysym, code, down, numlock = null, capslock = null) {
+    _sendKeyEvent(keysym, code, down) {
         if (down) {
             this._keyDownList[code] = keysym;
         } else {
@@ -48,9 +48,8 @@ export default class Keyboard {
         }
 
         Log.Debug("onkeyevent " + (down ? "down" : "up") +
-                  ", keysym: " + keysym, ", code: " + code +
-                  ", numlock: " + numlock + ", capslock: " + capslock);
-        this.onkeyevent(keysym, code, down, numlock, capslock);
+                  ", keysym: " + keysym, ", code: " + code);
+        this.onkeyevent(keysym, code, down);
     }
 
     _getKeyCode(e) {
@@ -87,14 +86,6 @@ export default class Keyboard {
     _handleKeyDown(e) {
         const code = this._getKeyCode(e);
         let keysym = KeyboardUtil.getKeysym(e);
-        let numlock = e.getModifierState('NumLock');
-        let capslock = e.getModifierState('CapsLock');
-
-        // getModifierState for NumLock is not supported on mac and ios and always returns false.
-        // Set to null to indicate unknown/unsupported instead.
-        if (browser.isMac() || browser.isIOS()) {
-            numlock = null;
-        }
 
         // Windows doesn't have a proper AltGr, but handles it using
         // fake Ctrl+Alt. However the remote end might not be Windows,
@@ -116,7 +107,7 @@ export default class Keyboard {
                 //        key to "AltGraph".
                 keysym = KeyTable.XK_ISO_Level3_Shift;
             } else {
-                this._sendKeyEvent(KeyTable.XK_Control_L, "ControlLeft", true, numlock, capslock);
+                this._sendKeyEvent(KeyTable.XK_Control_L, "ControlLeft", true);
             }
         }
 
@@ -127,8 +118,8 @@ export default class Keyboard {
                 // If it's a virtual keyboard then it should be
                 // sufficient to just send press and release right
                 // after each other
-                this._sendKeyEvent(keysym, code, true, numlock, capslock);
-                this._sendKeyEvent(keysym, code, false, numlock, capslock);
+                this._sendKeyEvent(keysym, code, true);
+                this._sendKeyEvent(keysym, code, false);
             }
 
             stopEvent(e);
@@ -166,8 +157,8 @@ export default class Keyboard {
         // while meta is held down
         if ((browser.isMac() || browser.isIOS()) &&
             (e.metaKey && code !== 'MetaLeft' && code !== 'MetaRight')) {
-            this._sendKeyEvent(keysym, code, true, numlock, capslock);
-            this._sendKeyEvent(keysym, code, false, numlock, capslock);
+            this._sendKeyEvent(keysym, code, true);
+            this._sendKeyEvent(keysym, code, false);
             stopEvent(e);
             return;
         }
@@ -177,8 +168,8 @@ export default class Keyboard {
         // which toggles on each press, but not on release. So pretend
         // it was a quick press and release of the button.
         if ((browser.isMac() || browser.isIOS()) && (code === 'CapsLock')) {
-            this._sendKeyEvent(KeyTable.XK_Caps_Lock, 'CapsLock', true, numlock, capslock);
-            this._sendKeyEvent(KeyTable.XK_Caps_Lock, 'CapsLock', false, numlock, capslock);
+            this._sendKeyEvent(KeyTable.XK_Caps_Lock, 'CapsLock', true);
+            this._sendKeyEvent(KeyTable.XK_Caps_Lock, 'CapsLock', false);
             stopEvent(e);
             return;
         }
@@ -191,8 +182,8 @@ export default class Keyboard {
                             KeyTable.XK_Hiragana,
                             KeyTable.XK_Romaji ];
         if (browser.isWindows() && jpBadKeys.includes(keysym)) {
-            this._sendKeyEvent(keysym, code, true, numlock, capslock);
-            this._sendKeyEvent(keysym, code, false, numlock, capslock);
+            this._sendKeyEvent(keysym, code, true);
+            this._sendKeyEvent(keysym, code, false);
             stopEvent(e);
             return;
         }
@@ -203,12 +194,12 @@ export default class Keyboard {
         if ((code === "ControlLeft") && browser.isWindows() &&
             !("ControlLeft" in this._keyDownList)) {
             this._altGrArmed = true;
-            this._altGrTimeout = setTimeout(this._interruptAltGrSequence.bind(this), 100);
+            this._altGrTimeout = setTimeout(this._handleAltGrTimeout.bind(this), 100);
             this._altGrCtrlTime = e.timeStamp;
             return;
         }
 
-        this._sendKeyEvent(keysym, code, true, numlock, capslock);
+        this._sendKeyEvent(keysym, code, true);
     }
 
     _handleKeyUp(e) {
@@ -218,7 +209,11 @@ export default class Keyboard {
 
         // We can't get a release in the middle of an AltGr sequence, so
         // abort that detection
-        this._interruptAltGrSequence();
+        if (this._altGrArmed) {
+            this._altGrArmed = false;
+            clearTimeout(this._altGrTimeout);
+            this._sendKeyEvent(KeyTable.XK_Control_L, "ControlLeft", true);
+        }
 
         // See comment in _handleKeyDown()
         if ((browser.isMac() || browser.isIOS()) && (code === 'CapsLock')) {
@@ -245,20 +240,14 @@ export default class Keyboard {
         }
     }
 
-    _interruptAltGrSequence() {
-        if (this._altGrArmed) {
-            this._altGrArmed = false;
-            clearTimeout(this._altGrTimeout);
-            this._sendKeyEvent(KeyTable.XK_Control_L, "ControlLeft", true);
-        }
+    _handleAltGrTimeout() {
+        this._altGrArmed = false;
+        clearTimeout(this._altGrTimeout);
+        this._sendKeyEvent(KeyTable.XK_Control_L, "ControlLeft", true);
     }
 
     _allKeysUp() {
         Log.Debug(">> Keyboard.allKeysUp");
-
-        // Prevent control key being processed after losing focus.
-        this._interruptAltGrSequence();
-
         for (let code in this._keyDownList) {
             this._sendKeyEvent(this._keyDownList[code], code, false);
         }

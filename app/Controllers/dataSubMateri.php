@@ -23,13 +23,11 @@ class DataSubMateri extends BaseController
             'materi' => $this->materi->where('idMateri', $idMateri)->first(),
         ];
 
-        echo view('v-header');
         return view('subMateri/v-dataSubMateri', $data);
     }
     public function tambahSub($idMateri)
     {
         $data = ['idMateri' => $idMateri];
-        echo view('v-header');
         return view('subMateri/v-tambahSubMateri', $data);
     }
 
@@ -82,7 +80,6 @@ class DataSubMateri extends BaseController
         $data = [
             'subMateri' => $this->subMateri->getSubMateriById($idSubMateri),
         ];
-        echo view('v-header');
         return view('subMateri/v-updateSubMateri', $data);
     }
     

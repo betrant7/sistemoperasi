@@ -20,7 +20,6 @@ class AdminBeranda extends BaseController
             'users' => $this->masterUser->where('role', 'mahasiswa')->findAll(),
             'materi' => $this->masterMateri->findAll()
         ];
-        echo view('v-header');
         return view('v-adminBeranda', $data);
     }
 
@@ -30,7 +29,6 @@ class AdminBeranda extends BaseController
         $data = [
             'user' => $this->masterUser->find(session()->get('idUser')),
         ];
-        echo view('v-header');
         return view('profil/v-adminProfil', $data);
     }
 

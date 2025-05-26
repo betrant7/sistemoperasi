@@ -1,3 +1,6 @@
+/* eslint-disable no-console */
+const expect = chai.expect;
+
 import { isMac, isWindows, isIOS, isAndroid, isChromeOS,
          isSafari, isFirefox, isChrome, isChromium, isOpera, isEdge,
          isGecko, isWebKit, isBlink } from '../core/util/browser.js';

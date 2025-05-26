@@ -1,12 +1,13 @@
+const expect = chai.expect;
+
 import RFB from '../core/rfb.js';
 import Websock from '../core/websock.js';
 import ZStream from "../vendor/pako/lib/zlib/zstream.js";
-import { deflateInit, deflate, Z_DEFAULT_COMPRESSION } from "../vendor/pako/lib/zlib/deflate.js";
+import { deflateInit, deflate } from "../vendor/pako/lib/zlib/deflate.js";
 import { encodings } from '../core/encodings.js';
 import { toUnsigned32bit } from '../core/util/int.js';
 import { encodeUTF8 } from '../core/util/strings.js';
 import KeyTable from '../core/input/keysym.js';
-import legacyCrypto from '../core/crypto/crypto.js';
 
 import FakeWebSocket from './fake.websocket.js';
 
@@ -52,7 +53,7 @@ function deflateWithSize(data) {
     let strm = new ZStream();
     let chunkSize = 1024 * 10 * 10;
     strm.output = new Uint8Array(chunkSize);
-    deflateInit(strm, Z_DEFAULT_COMPRESSION);
+    deflateInit(strm, 5);
 
     /* eslint-disable camelcase */
     strm.input = unCompData;
@@ -67,7 +68,7 @@ function deflateWithSize(data) {
     return new Uint8Array(strm.output.buffer, 0, strm.next_out);
 }
 
-describe('Remote Frame Buffer protocol client', function () {
+describe('Remote Frame Buffer Protocol Client', function () {
     let clock;
     let raf;
     let fakeResizeObserver = null;
@@ -156,128 +157,6 @@ describe('Remote Frame Buffer protocol client', function () {
         sinon.spy(rfb, "_disconnect");
         rfbs.push(rfb);
         return rfb;
-    }
-
-    function elementToClient(x, y, client) {
-        let res = { x: 0, y: 0 };
-
-        let bounds = client._canvas.getBoundingClientRect();
-
-        /*
-         * If the canvas is on a fractional position we will calculate
-         * a fractional mouse position. But that gets truncated when we
-         * send the event, AND the same thing happens in RFB when it
-         * generates the PointerEvent message. To compensate for that
-         * fact we round the value upwards here.
-         */
-        res.x = Math.ceil(bounds.left + x);
-        res.y = Math.ceil(bounds.top + y);
-
-        return res;
-    }
-
-    function sendMouseMoveEvent(x, y, buttons, client) {
-        let pos = elementToClient(x, y, client);
-        let ev;
-
-        ev = new MouseEvent('mousemove',
-                            { 'screenX': pos.x + window.screenX,
-                              'screenY': pos.y + window.screenY,
-                              'clientX': pos.x,
-                              'clientY': pos.y,
-                              'buttons': buttons });
-        client._canvas.dispatchEvent(ev);
-    }
-
-    function sendMouseButtonEvent(x, y, down, buttons, client) {
-        let pos = elementToClient(x, y, client);
-        let ev;
-
-        ev = new MouseEvent(down ? 'mousedown' : 'mouseup',
-                            { 'screenX': pos.x + window.screenX,
-                              'screenY': pos.y + window.screenY,
-                              'clientX': pos.x,
-                              'clientY': pos.y,
-                              'buttons': buttons});
-        client._canvas.dispatchEvent(ev);
-    }
-
-    function gestureStart(gestureType, x, y, client,
-                          magnitudeX = 0, magnitudeY = 0) {
-        let pos = elementToClient(x, y, client);
-        let detail = { type: gestureType, clientX: pos.x, clientY: pos.y };
-
-        detail.magnitudeX = magnitudeX;
-        detail.magnitudeY = magnitudeY;
-
-        let ev = new CustomEvent('gesturestart', { detail: detail });
-        client._canvas.dispatchEvent(ev);
-    }
-
-    function gestureMove(gestureType, x, y, client,
-                         magnitudeX = 0, magnitudeY = 0) {
-        let pos = elementToClient(x, y, client);
-        let detail = { type: gestureType, clientX: pos.x, clientY: pos.y };
-
-        detail.magnitudeX = magnitudeX;
-        detail.magnitudeY = magnitudeY;
-
-        let ev = new CustomEvent('gesturemove', { detail: detail }, client);
-        client._canvas.dispatchEvent(ev);
-    }
-
-    function gestureEnd(gestureType, x, y, client) {
-        let pos = elementToClient(x, y, client);
-        let detail = { type: gestureType, clientX: pos.x, clientY: pos.y };
-        let ev = new CustomEvent('gestureend', { detail: detail });
-        client._canvas.dispatchEvent(ev);
-    }
-
-    function sendFbuMsg(rectInfo, rectData, client, rectCnt) {
-        let data = [];
-
-        if (!rectCnt || rectCnt > -1) {
-            // header
-            data.push(0);  // msg type
-            data.push(0);  // padding
-            push16(data, rectCnt || rectData.length);
-        }
-
-        for (let i = 0; i < rectData.length; i++) {
-            if (rectInfo[i]) {
-                push16(data, rectInfo[i].x);
-                push16(data, rectInfo[i].y);
-                push16(data, rectInfo[i].width);
-                push16(data, rectInfo[i].height);
-                push32(data, rectInfo[i].encoding);
-            }
-            data = data.concat(rectData[i]);
-        }
-
-        client._sock._websocket._receiveData(new Uint8Array(data));
-    }
-
-    function sendExtendedDesktopSize(client, reason, result, width, height, screenId, screenFlags) {
-        let rectInfo = { x: reason, y: result, width: width, height: height, encoding: -308 };
-        let rectData = [
-            0x01,        // number of screens = 1
-            0x00, 0x00,
-            0x00,        // padding
-            (screenId >> 24) & 0xff,
-            (screenId >> 16) & 0xff,
-            (screenId >> 8) & 0xff,
-            screenId & 0xff,
-            0x00, 0x00,  // screen x
-            0x00, 0x00,  // screen y
-            (width >> 8) & 0xff,
-            width & 0xff,
-            (height >> 8) & 0xff,
-            height & 0xff,
-            (screenFlags >> 24) & 0xff,
-            (screenFlags >> 16) & 0xff,
-            (screenFlags >> 8) & 0xff,
-            screenFlags & 0xff];
-        sendFbuMsg([rectInfo], [rectData], client);
     }
 
     describe('Connecting/Disconnecting', function () {
@@ -407,9 +286,29 @@ describe('Remote Frame Buffer protocol client', function () {
                 expect(client._sock.off).to.have.been.calledWith('open');
             });
         });
+
+        describe('#sendCredentials', function () {
+            let client;
+            beforeEach(function () {
+                client = makeRFB();
+                client._rfbConnectionState = 'connecting';
+            });
+
+            it('should set the rfb credentials properly"', function () {
+                client.sendCredentials({ password: 'pass' });
+                expect(client._rfbCredentials).to.deep.equal({ password: 'pass' });
+            });
+
+            it('should call initMsg "soon"', function () {
+                client._initMsg = sinon.spy();
+                client.sendCredentials({ password: 'pass' });
+                this.clock.tick(5);
+                expect(client._initMsg).to.have.been.calledOnce;
+            });
+        });
     });
 
-    describe('Public API basic behavior', function () {
+    describe('Public API Basic Behavior', function () {
         let client;
         beforeEach(function () {
             client = makeRFB();
@@ -417,114 +316,89 @@ describe('Remote Frame Buffer protocol client', function () {
 
         describe('#sendCtrlAlDel', function () {
             it('should sent ctrl[down]-alt[down]-del[down] then del[up]-alt[up]-ctrl[up]', function () {
-                let esock = new Websock();
-                let ews = new FakeWebSocket();
-                ews._open();
-                esock.attach(ews);
-                RFB.messages.keyEvent(esock, 0xFFE3, 1);
-                RFB.messages.keyEvent(esock, 0xFFE9, 1);
-                RFB.messages.keyEvent(esock, 0xFFFF, 1);
-                RFB.messages.keyEvent(esock, 0xFFFF, 0);
-                RFB.messages.keyEvent(esock, 0xFFE9, 0);
-                RFB.messages.keyEvent(esock, 0xFFE3, 0);
-                let expected = ews._getSentData();
+                const expected = {_sQ: new Uint8Array(48), _sQlen: 0, flush: () => {}};
+                RFB.messages.keyEvent(expected, 0xFFE3, 1);
+                RFB.messages.keyEvent(expected, 0xFFE9, 1);
+                RFB.messages.keyEvent(expected, 0xFFFF, 1);
+                RFB.messages.keyEvent(expected, 0xFFFF, 0);
+                RFB.messages.keyEvent(expected, 0xFFE9, 0);
+                RFB.messages.keyEvent(expected, 0xFFE3, 0);
 
                 client.sendCtrlAltDel();
-
-                expect(client._sock).to.have.sent(expected);
+                expect(client._sock).to.have.sent(expected._sQ);
             });
 
             it('should not send the keys if we are not in a normal state', function () {
+                sinon.spy(client._sock, 'flush');
                 client._rfbConnectionState = "connecting";
                 client.sendCtrlAltDel();
-                expect(client._sock).to.have.sent(new Uint8Array([]));
+                expect(client._sock.flush).to.not.have.been.called;
             });
 
             it('should not send the keys if we are set as view_only', function () {
+                sinon.spy(client._sock, 'flush');
                 client._viewOnly = true;
                 client.sendCtrlAltDel();
-                expect(client._sock).to.have.sent(new Uint8Array([]));
+                expect(client._sock.flush).to.not.have.been.called;
             });
         });
 
         describe('#sendKey', function () {
             it('should send a single key with the given code and state (down = true)', function () {
-                let esock = new Websock();
-                let ews = new FakeWebSocket();
-                ews._open();
-                esock.attach(ews);
-                RFB.messages.keyEvent(esock, 123, 1);
-                let expected = ews._getSentData();
-
+                const expected = {_sQ: new Uint8Array(8), _sQlen: 0, flush: () => {}};
+                RFB.messages.keyEvent(expected, 123, 1);
                 client.sendKey(123, 'Key123', true);
-
-                expect(client._sock).to.have.sent(expected);
+                expect(client._sock).to.have.sent(expected._sQ);
             });
 
             it('should send both a down and up event if the state is not specified', function () {
-                let esock = new Websock();
-                let ews = new FakeWebSocket();
-                ews._open();
-                esock.attach(ews);
-                RFB.messages.keyEvent(esock, 123, 1);
-                RFB.messages.keyEvent(esock, 123, 0);
-                let expected = ews._getSentData();
-
+                const expected = {_sQ: new Uint8Array(16), _sQlen: 0, flush: () => {}};
+                RFB.messages.keyEvent(expected, 123, 1);
+                RFB.messages.keyEvent(expected, 123, 0);
                 client.sendKey(123, 'Key123');
-
-                expect(client._sock).to.have.sent(expected);
+                expect(client._sock).to.have.sent(expected._sQ);
             });
 
             it('should not send the key if we are not in a normal state', function () {
+                sinon.spy(client._sock, 'flush');
                 client._rfbConnectionState = "connecting";
                 client.sendKey(123, 'Key123');
-                expect(client._sock).to.have.sent(new Uint8Array([]));
+                expect(client._sock.flush).to.not.have.been.called;
             });
 
             it('should not send the key if we are set as view_only', function () {
+                sinon.spy(client._sock, 'flush');
                 client._viewOnly = true;
                 client.sendKey(123, 'Key123');
-                expect(client._sock).to.have.sent(new Uint8Array([]));
+                expect(client._sock.flush).to.not.have.been.called;
             });
 
             it('should send QEMU extended events if supported', function () {
                 client._qemuExtKeyEventSupported = true;
-                let esock = new Websock();
-                let ews = new FakeWebSocket();
-                ews._open();
-                esock.attach(ews);
-                RFB.messages.QEMUExtendedKeyEvent(esock, 0x20, true, 0x0039);
-                let expected = ews._getSentData();
-
+                const expected = {_sQ: new Uint8Array(12), _sQlen: 0, flush: () => {}};
+                RFB.messages.QEMUExtendedKeyEvent(expected, 0x20, true, 0x0039);
                 client.sendKey(0x20, 'Space', true);
-
-                expect(client._sock).to.have.sent(expected);
+                expect(client._sock).to.have.sent(expected._sQ);
             });
 
             it('should not send QEMU extended events if unknown key code', function () {
                 client._qemuExtKeyEventSupported = true;
-                let esock = new Websock();
-                let ews = new FakeWebSocket();
-                ews._open();
-                esock.attach(ews);
-                RFB.messages.keyEvent(esock, 123, 1);
-                let expected = ews._getSentData();
-
+                const expected = {_sQ: new Uint8Array(8), _sQlen: 0, flush: () => {}};
+                RFB.messages.keyEvent(expected, 123, 1);
                 client.sendKey(123, 'FooBar', true);
-
-                expect(client._sock).to.have.sent(expected);
+                expect(client._sock).to.have.sent(expected._sQ);
             });
         });
 
         describe('#focus', function () {
             it('should move focus to canvas object', function () {
-                sinon.spy(client._canvas, "focus");
+                client._canvas.focus = sinon.spy();
                 client.focus();
                 expect(client._canvas.focus).to.have.been.calledOnce;
             });
 
             it('should include focus options', function () {
-                sinon.spy(client._canvas, "focus");
+                client._canvas.focus = sinon.spy();
                 client.focus({ foobar: 12, gazonk: true });
                 expect(client._canvas.focus).to.have.been.calledOnce;
                 expect(client._canvas.focus).to.have.been.calledWith({ foobar: 12, gazonk: true});
@@ -533,7 +407,7 @@ describe('Remote Frame Buffer protocol client', function () {
 
         describe('#blur', function () {
             it('should remove focus from canvas object', function () {
-                sinon.spy(client._canvas, "blur");
+                client._canvas.blur = sinon.spy();
                 client.blur();
                 expect(client._canvas.blur).to.have.been.calledOnce;
             });
@@ -673,13 +547,20 @@ describe('Remote Frame Buffer protocol client', function () {
         });
 
         it('should update the viewport when the remote session resizes', function () {
+            // Simple ExtendedDesktopSize FBU message
+            const incoming = [ 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
+                               0x00, 0xff, 0x00, 0xff, 0xff, 0xff, 0xfe, 0xcc,
+                               0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                               0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x00, 0xff,
+                               0x00, 0x00, 0x00, 0x00 ];
+
             sinon.spy(client._display, "viewportChangeSize");
 
-            // Simple ExtendedDesktopSize FBU message
-            sendExtendedDesktopSize(client, 0, 0, 4, 4, 0x7890abcd, 0x12345678);
+            client._sock._websocket._receiveData(new Uint8Array(incoming));
             // The resize will cause scrollbars on the container, this causes a
             // resize observation in the browsers
             fakeResizeObserver.fire();
+            clock.tick(1000);
 
             // FIXME: Display implicitly calls viewportChangeSize() when
             //        resizing the framebuffer, hence calledTwice.
@@ -739,10 +620,7 @@ describe('Remote Frame Buffer protocol client', function () {
 
         describe('Dragging', function () {
             beforeEach(function () {
-                client = makeRFB();
                 client.dragViewport = true;
-                client._display.resize(100, 100);
-
                 sinon.spy(RFB.messages, "pointerEvent");
             });
 
@@ -751,80 +629,52 @@ describe('Remote Frame Buffer protocol client', function () {
             });
 
             it('should not send button messages when initiating viewport dragging', function () {
-                sendMouseButtonEvent(13, 9, true, 0x1, client);
+                client._handleMouseButton(13, 9, 0x001);
                 expect(RFB.messages.pointerEvent).to.not.have.been.called;
             });
 
             it('should send button messages when release without movement', function () {
                 // Just up and down
-                sendMouseButtonEvent(13, 9, true, 0x1, client);
-                sendMouseButtonEvent(13, 9, false, 0x0, client);
-
+                client._handleMouseButton(13, 9, 0x001);
+                client._handleMouseButton(13, 9, 0x000);
                 expect(RFB.messages.pointerEvent).to.have.been.calledTwice;
-                expect(RFB.messages.pointerEvent.firstCall).to.have.been.calledWith(client._sock,
-                                                                                    13, 9, 0x1);
-                expect(RFB.messages.pointerEvent.secondCall).to.have.been.calledWith(client._sock,
-                                                                                     13, 9, 0x0);
-            });
 
-            it('should send button messages when tapping', function () {
-                // Just up and down
-                gestureStart('onetap', 13, 9, client);
-                gestureEnd('onetap', 13, 9, client);
+                RFB.messages.pointerEvent.resetHistory();
 
-                expect(RFB.messages.pointerEvent).to.have.been.calledThrice;
-                expect(RFB.messages.pointerEvent.firstCall).to.have.been.calledWith(client._sock,
-                                                                                    13, 9, 0x0);
-                expect(RFB.messages.pointerEvent.secondCall).to.have.been.calledWith(client._sock,
-                                                                                     13, 9, 0x1);
-                expect(RFB.messages.pointerEvent.thirdCall).to.have.been.calledWith(client._sock,
-                                                                                    13, 9, 0x0);
-            });
-
-            it('should send button messages when release with small movement', function () {
                 // Small movement
-                sendMouseButtonEvent(13, 9, true, 0x1, client);
-                sendMouseMoveEvent(15, 14, 0x1, client);
-                sendMouseButtonEvent(15, 14, false, 0x0, client);
-
+                client._handleMouseButton(13, 9, 0x001);
+                client._handleMouseMove(15, 14);
+                client._handleMouseButton(15, 14, 0x000);
                 expect(RFB.messages.pointerEvent).to.have.been.calledTwice;
-                expect(RFB.messages.pointerEvent.firstCall).to.have.been.calledWith(client._sock,
-                                                                                    15, 14, 0x1);
-                expect(RFB.messages.pointerEvent.secondCall).to.have.been.calledWith(client._sock,
-                                                                                     15, 14, 0x0);
             });
 
             it('should not send button messages when in view only', function () {
                 client._viewOnly = true;
-
-                sendMouseButtonEvent(13, 9, true, 0x1, client);
-                sendMouseButtonEvent(13, 9, false, 0x0, client);
-
+                client._handleMouseButton(13, 9, 0x001);
+                client._handleMouseButton(13, 9, 0x000);
                 expect(RFB.messages.pointerEvent).to.not.have.been.called;
             });
 
             it('should send button message directly when drag is disabled', function () {
                 client.dragViewport = false;
-                sendMouseButtonEvent(13, 9, true, 0x1, client);
+                client._handleMouseButton(13, 9, 0x001);
                 expect(RFB.messages.pointerEvent).to.have.been.calledOnce;
-                expect(RFB.messages.pointerEvent.firstCall).to.have.been.calledWith(client._sock,
-                                                                                    13, 9, 0x1);
             });
 
             it('should be initiate viewport dragging on sufficient movement', function () {
                 sinon.spy(client._display, "viewportChangePos");
 
                 // Too small movement
-                sendMouseButtonEvent(13, 9, true, 0x1, client);
-                sendMouseMoveEvent(18, 9, 0x1, client);
 
+                client._handleMouseButton(13, 9, 0x001);
+                client._handleMouseMove(18, 9);
 
                 expect(RFB.messages.pointerEvent).to.not.have.been.called;
                 expect(client._display.viewportChangePos).to.not.have.been.called;
 
                 // Sufficient movement
 
-                sendMouseMoveEvent(43, 9, 0x1, client);
+                client._handleMouseMove(43, 9);
 
                 expect(RFB.messages.pointerEvent).to.not.have.been.called;
                 expect(client._display.viewportChangePos).to.have.been.calledOnce;
@@ -834,91 +684,19 @@ describe('Remote Frame Buffer protocol client', function () {
 
                 // Now a small movement should move right away
 
-                sendMouseMoveEvent(43, 14, 0x1, client);
+                client._handleMouseMove(43, 14);
 
                 expect(RFB.messages.pointerEvent).to.not.have.been.called;
                 expect(client._display.viewportChangePos).to.have.been.calledOnce;
                 expect(client._display.viewportChangePos).to.have.been.calledWith(0, -5);
-            });
-
-            it('should initiate viewport dragging on sufficient drag gesture movement', function () {
-                sinon.spy(client._display, "viewportChangePos");
-
-                // Sufficient movement
-                gestureStart('drag', 13, 9, client);
-                gestureMove('drag', 43, 9, client);
-
-                expect(RFB.messages.pointerEvent).to.not.have.been.called;
-                expect(client._display.viewportChangePos).to.have.been.calledOnce;
-                expect(client._display.viewportChangePos).to.have.been.calledWith(-30, 0);
-
-                client._display.viewportChangePos.resetHistory();
-                RFB.messages.pointerEvent.resetHistory();
-
-                // Now a small movement should move right away
-
-                gestureMove('drag', 43, 14, client);
-                gestureEnd('drag', 43, 14, client);
-
-                expect(RFB.messages.pointerEvent).to.not.have.been.called;
-
-                expect(client._display.viewportChangePos).to.have.been.calledOnce;
-                expect(client._display.viewportChangePos).to.have.been.calledWith(0, -5);
-            });
-
-            it('should initiate viewport dragging on sufficient longpress gesture movement', function () {
-                sinon.spy(client._display, "viewportChangePos");
-
-                // A small movement below the threshold should not move.
-                gestureStart('longpress', 13, 9, client);
-                gestureMove('longpress', 14, 9, client);
-
-                expect(RFB.messages.pointerEvent).to.not.have.been.called;
-                expect(client._display.viewportChangePos).to.not.have.been.called;
-
-                client._display.viewportChangePos.resetHistory();
-                RFB.messages.pointerEvent.resetHistory();
-
-                gestureMove('longpress', 43, 9, client);
-                gestureEnd('longpress', 43, 9, client);
-
-                expect(RFB.messages.pointerEvent).to.not.have.been.called;
-                expect(client._display.viewportChangePos).to.have.been.calledOnce;
-                expect(client._display.viewportChangePos).to.have.been.calledWith(-30, 0);
-            });
-
-            it('should send button messages on small longpress gesture movement', function () {
-                sinon.spy(client._display, "viewportChangePos");
-
-                // A small movement below the threshold should not move.
-                gestureStart('longpress', 13, 9, client);
-                gestureMove('longpress', 14, 10, client);
-
-                expect(RFB.messages.pointerEvent).to.not.have.been.called;
-                expect(client._display.viewportChangePos).to.not.have.been.called;
-
-                client._display.viewportChangePos.resetHistory();
-                RFB.messages.pointerEvent.resetHistory();
-
-                gestureEnd('longpress', 14, 9, client);
-
-                expect(RFB.messages.pointerEvent).to.have.been.calledThrice;
-                expect(RFB.messages.pointerEvent.firstCall).to.have.been.calledWith(client._sock,
-                                                                                    14, 9, 0x0);
-                expect(RFB.messages.pointerEvent.secondCall).to.have.been.calledWith(client._sock,
-                                                                                     14, 9, 0x4);
-                expect(RFB.messages.pointerEvent.thirdCall).to.have.been.calledWith(client._sock,
-                                                                                    14, 9, 0x0);
-
-                expect(client._display.viewportChangePos).to.not.have.been.called;
             });
 
             it('should not send button messages when dragging ends', function () {
                 // First the movement
 
-                sendMouseButtonEvent(13, 9, true, 0x1, client);
-                sendMouseMoveEvent(43, 9, 0x1, client);
-                sendMouseButtonEvent(43, 9, false, 0x0, client);
+                client._handleMouseButton(13, 9, 0x001);
+                client._handleMouseMove(43, 9);
+                client._handleMouseButton(43, 9, 0x000);
 
                 expect(RFB.messages.pointerEvent).to.not.have.been.called;
             });
@@ -926,35 +704,17 @@ describe('Remote Frame Buffer protocol client', function () {
             it('should terminate viewport dragging on a button up event', function () {
                 // First the dragging movement
 
-                sendMouseButtonEvent(13, 9, true, 0x1, client);
-                sendMouseMoveEvent(43, 9, 0x1, client);
-                sendMouseButtonEvent(43, 9, false, 0x0, client);
+                client._handleMouseButton(13, 9, 0x001);
+                client._handleMouseMove(43, 9);
+                client._handleMouseButton(43, 9, 0x000);
 
                 // Another movement now should not move the viewport
 
                 sinon.spy(client._display, "viewportChangePos");
 
-                sendMouseMoveEvent(43, 59, 0x0, client);
+                client._handleMouseMove(43, 59);
 
                 expect(client._display.viewportChangePos).to.not.have.been.called;
-            });
-
-            it('should flush move events when initiating viewport drag', function () {
-                sendMouseMoveEvent(13, 9, 0x0, client);
-                sendMouseMoveEvent(14, 9, 0x0, client);
-                sendMouseButtonEvent(14, 9, true, 0x1, client);
-
-                expect(RFB.messages.pointerEvent).to.have.been.calledTwice;
-                expect(RFB.messages.pointerEvent.firstCall).to.have.been.calledWith(client._sock,
-                                                                                    13, 9, 0x0);
-                expect(RFB.messages.pointerEvent.secondCall).to.have.been.calledWith(client._sock,
-                                                                                     14, 9, 0x0);
-
-                RFB.messages.pointerEvent.resetHistory();
-
-                clock.tick(100);
-
-                expect(RFB.messages.pointerEvent).to.not.have.been.called;;
             });
         });
     });
@@ -966,8 +726,6 @@ describe('Remote Frame Buffer protocol client', function () {
             container.style.width = '70px';
             container.style.height = '80px';
             client.scaleViewport = true;
-
-            sendExtendedDesktopSize(client, 0, 0, 4, 4, 0x7890abcd, 0x12345678);
         });
 
         it('should update display scale factor when changing the property', function () {
@@ -1012,35 +770,21 @@ describe('Remote Frame Buffer protocol client', function () {
             expect(client._display.autoscale).to.have.been.calledWith(40, 50);
         });
 
-        it('should update the scaling resized back to initial size', function () {
-            sinon.spy(client._display, "autoscale");
-
-            container.style.width = '40px';
-            container.style.height = '50px';
-            fakeResizeObserver.fire();
-            clock.tick(1000);
-
-            expect(client._display.autoscale).to.have.been.calledOnce;
-            expect(client._display.autoscale).to.have.been.calledWith(40, 50);
-            client._display.autoscale.resetHistory();
-
-            container.style.width = '70px';
-            container.style.height = '80px';
-            fakeResizeObserver.fire();
-            clock.tick(1000);
-
-            expect(client._display.autoscale).to.have.been.calledOnce;
-            expect(client._display.autoscale).to.have.been.calledWith(70, 80);
-            client._display.autoscale.resetHistory();
-        });
-
         it('should update the scaling when the remote session resizes', function () {
+            // Simple ExtendedDesktopSize FBU message
+            const incoming = [ 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
+                               0x00, 0xff, 0x00, 0xff, 0xff, 0xff, 0xfe, 0xcc,
+                               0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                               0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0x00, 0xff,
+                               0x00, 0x00, 0x00, 0x00 ];
+
             sinon.spy(client._display, "autoscale");
 
-            sendExtendedDesktopSize(client, 0, 0, 4, 4, 0x7890abcd, 0x12345678);
+            client._sock._websocket._receiveData(new Uint8Array(incoming));
             // The resize will cause scrollbars on the container, this causes a
             // resize observation in the browsers
             fakeResizeObserver.fire();
+            clock.tick(1000);
 
             expect(client._display.autoscale).to.have.been.calledOnce;
             expect(client._display.autoscale).to.have.been.calledWith(70, 80);
@@ -1064,21 +808,11 @@ describe('Remote Frame Buffer protocol client', function () {
         let client;
         beforeEach(function () {
             client = makeRFB();
+            client._supportsSetDesktopSize = true;
             client.resizeSession = true;
             container.style.width = '70px';
             container.style.height = '80px';
-
             sinon.spy(RFB.messages, "setDesktopSize");
-
-            sendExtendedDesktopSize(client, 0, 0, 4, 4, 0x7890abcd, 0x12345678);
-
-            if (RFB.messages.setDesktopSize.calledOnce) {
-                let width = RFB.messages.setDesktopSize.args[0][1];
-                let height = RFB.messages.setDesktopSize.args[0][2];
-                sendExtendedDesktopSize(client, 1, 0, width, height, 0x7890abcd, 0x12345678);
-                RFB.messages.setDesktopSize.resetHistory();
-                clock.tick(10000);
-            }
         });
 
         afterEach(function () {
@@ -1088,40 +822,51 @@ describe('Remote Frame Buffer protocol client', function () {
         it('should only request a resize when turned on', function () {
             client.resizeSession = false;
             expect(RFB.messages.setDesktopSize).to.not.have.been.called;
-
-            container.style.width = '40px';
-            container.style.height = '50px';
-            fakeResizeObserver.fire();
-            expect(RFB.messages.setDesktopSize).to.not.have.been.called;
-
             client.resizeSession = true;
             expect(RFB.messages.setDesktopSize).to.have.been.calledOnce;
         });
 
         it('should request a resize when initially connecting', function () {
-            // Create a new object that hasn't yet seen a
-            // ExtendedDesktopSize rect
-            client = makeRFB();
-            client.resizeSession = true;
-            container.style.width = '70px';
-            container.style.height = '80px';
+            // Simple ExtendedDesktopSize FBU message
+            const incoming = [ 0x00,        // msg-type=FBU
+                               0x00,        // padding
+                               0x00, 0x01,  // number of rects = 1
+                               0x00, 0x00,  // reason = server initialized
+                               0x00, 0x00,  // status = no error
+                               0x00, 0x04,  // new width = 4
+                               0x00, 0x04,  // new height = 4
+                               0xff, 0xff,
+                               0xfe, 0xcc,  // enc = (-308) ExtendedDesktopSize
+                               0x01,        // number of screens = 1
+                               0x00, 0x00,
+                               0x00,        // padding
+                               0x00, 0x00,
+                               0x00, 0x00,  // screen id = 0
+                               0x00, 0x00,  // screen x = 0
+                               0x00, 0x00,  // screen y = 0
+                               0x00, 0x04,  // screen width = 4
+                               0x00, 0x04,  // screen height = 4
+                               0x00, 0x00,
+                               0x00, 0x00]; // screen flags
+
+            // This property is indirectly used as a marker for the first update
+            client._supportsSetDesktopSize = false;
 
             // First message should trigger a resize
 
-            sendExtendedDesktopSize(client, 0, 0, 4, 4, 0x7890abcd, 0x12345678);
+            client._sock._websocket._receiveData(new Uint8Array(incoming));
 
             // It should match the current size of the container,
             // not the reported size from the server
             expect(RFB.messages.setDesktopSize).to.have.been.calledOnce;
             expect(RFB.messages.setDesktopSize).to.have.been.calledWith(
-                sinon.match.object, 70, 80, 0x7890abcd, 0x12345678);
+                sinon.match.object, 70, 80, 0, 0);
 
-            sendExtendedDesktopSize(client, 1, 0, 70, 80, 0x7890abcd, 0x12345678);
             RFB.messages.setDesktopSize.resetHistory();
 
             // Second message should not trigger a resize
 
-            sendExtendedDesktopSize(client, 0, 0, 4, 4, 0x7890abcd, 0x12345678);
+            client._sock._websocket._receiveData(new Uint8Array(incoming));
 
             expect(RFB.messages.setDesktopSize).to.not.have.been.called;
         });
@@ -1130,166 +875,60 @@ describe('Remote Frame Buffer protocol client', function () {
             container.style.width = '40px';
             container.style.height = '50px';
             fakeResizeObserver.fire();
+            clock.tick(1000);
 
             expect(RFB.messages.setDesktopSize).to.have.been.calledOnce;
-            expect(RFB.messages.setDesktopSize).to.have.been.calledWith(
-                sinon.match.object, 40, 50, 0x7890abcd, 0x12345678);
+            expect(RFB.messages.setDesktopSize).to.have.been.calledWith(sinon.match.object, 40, 50, 0, 0);
         });
 
         it('should not request the same size twice', function () {
             container.style.width = '40px';
             container.style.height = '50px';
             fakeResizeObserver.fire();
+            clock.tick(1000);
 
             expect(RFB.messages.setDesktopSize).to.have.been.calledOnce;
             expect(RFB.messages.setDesktopSize).to.have.been.calledWith(
-                sinon.match.object, 40, 50, 0x7890abcd, 0x12345678);
+                sinon.match.object, 40, 50, 0, 0);
 
             // Server responds with the requested size 40x50
-            sendExtendedDesktopSize(client, 1, 0, 40, 50, 0x7890abcd, 0x12345678);
+            const incoming = [ 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00,
+                               0x00, 0x28, 0x00, 0x32, 0xff, 0xff, 0xfe, 0xcc,
+                               0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                               0x00, 0x00, 0x00, 0x00, 0x00, 0x28, 0x00, 0x32,
+                               0x00, 0x00, 0x00, 0x00];
+
+            client._sock._websocket._receiveData(new Uint8Array(incoming));
+            clock.tick(1000);
 
             RFB.messages.setDesktopSize.resetHistory();
 
             // size is still 40x50
-            clock.tick(1000);
             fakeResizeObserver.fire();
+            clock.tick(1000);
 
             expect(RFB.messages.setDesktopSize).to.not.have.been.called;
         });
 
-        it('should request a resize when resized back to initial size', function () {
-            container.style.width = '40px';
-            container.style.height = '50px';
-            fakeResizeObserver.fire();
-
-            expect(RFB.messages.setDesktopSize).to.have.been.calledOnce;
-            expect(RFB.messages.setDesktopSize).to.have.been.calledWith(
-                sinon.match.object, 40, 50, 0x7890abcd, 0x12345678);
-
-            sendExtendedDesktopSize(client, 1, 0, 40, 50, 0x7890abcd, 0x12345678);
-            RFB.messages.setDesktopSize.resetHistory();
-
-            clock.tick(1000);
-            container.style.width = '70px';
-            container.style.height = '80px';
-            fakeResizeObserver.fire();
-
-            expect(RFB.messages.setDesktopSize).to.have.been.calledOnce;
-            expect(RFB.messages.setDesktopSize).to.have.been.calledWith(
-                sinon.match.object, 70, 80, 0x7890abcd, 0x12345678);
-        });
-
-        it('should rate limit resizes', function () {
+        it('should not resize until the container size is stable', function () {
             container.style.width = '20px';
             container.style.height = '30px';
             fakeResizeObserver.fire();
-
-            expect(RFB.messages.setDesktopSize).to.have.been.calledOnce;
-            expect(RFB.messages.setDesktopSize).to.have.been.calledWith(
-                sinon.match.object, 20, 30, 0x7890abcd, 0x12345678);
-
-            sendExtendedDesktopSize(client, 1, 0, 20, 30, 0x7890abcd, 0x12345678);
-            RFB.messages.setDesktopSize.resetHistory();
-
-            clock.tick(20);
-
-            container.style.width = '30px';
-            container.style.height = '40px';
-            fakeResizeObserver.fire();
+            clock.tick(400);
 
             expect(RFB.messages.setDesktopSize).to.not.have.been.called;
-
-            clock.tick(20);
 
             container.style.width = '40px';
             container.style.height = '50px';
             fakeResizeObserver.fire();
+            clock.tick(400);
 
             expect(RFB.messages.setDesktopSize).to.not.have.been.called;
 
-            clock.tick(80);
+            clock.tick(200);
 
             expect(RFB.messages.setDesktopSize).to.have.been.calledOnce;
-            expect(RFB.messages.setDesktopSize).to.have.been.calledWith(
-                sinon.match.object, 40, 50, 0x7890abcd, 0x12345678);
-        });
-
-        it('should not have overlapping resize requests', function () {
-            container.style.width = '40px';
-            container.style.height = '50px';
-            fakeResizeObserver.fire();
-
-            expect(RFB.messages.setDesktopSize).to.have.been.calledOnce;
-
-            RFB.messages.setDesktopSize.resetHistory();
-
-            clock.tick(1000);
-            container.style.width = '20px';
-            container.style.height = '30px';
-            fakeResizeObserver.fire();
-
-            expect(RFB.messages.setDesktopSize).to.not.have.been.called;
-        });
-
-        it('should finalize any pending resizes', function () {
-            container.style.width = '40px';
-            container.style.height = '50px';
-            fakeResizeObserver.fire();
-
-            expect(RFB.messages.setDesktopSize).to.have.been.calledOnce;
-
-            RFB.messages.setDesktopSize.resetHistory();
-
-            clock.tick(1000);
-            container.style.width = '20px';
-            container.style.height = '30px';
-            fakeResizeObserver.fire();
-
-            expect(RFB.messages.setDesktopSize).to.not.have.been.called;
-
-            // Server responds with the requested size 40x50
-            sendExtendedDesktopSize(client, 1, 0, 40, 50, 0x7890abcd, 0x12345678);
-
-            expect(RFB.messages.setDesktopSize).to.have.been.calledOnce;
-            expect(RFB.messages.setDesktopSize).to.have.been.calledWith(
-                sinon.match.object, 20, 30, 0x7890abcd, 0x12345678);
-        });
-
-        it('should not finalize any pending resize if not needed', function () {
-            container.style.width = '40px';
-            container.style.height = '50px';
-            fakeResizeObserver.fire();
-
-            expect(RFB.messages.setDesktopSize).to.have.been.calledOnce;
-
-            RFB.messages.setDesktopSize.resetHistory();
-
-            // Server responds with the requested size 40x50
-            sendExtendedDesktopSize(client, 1, 0, 40, 50, 0x7890abcd, 0x12345678);
-
-            expect(RFB.messages.setDesktopSize).to.not.have.been.called;
-        });
-
-        it('should not finalize any pending resizes on errors', function () {
-            container.style.width = '40px';
-            container.style.height = '50px';
-            fakeResizeObserver.fire();
-
-            expect(RFB.messages.setDesktopSize).to.have.been.calledOnce;
-
-            RFB.messages.setDesktopSize.resetHistory();
-
-            clock.tick(1000);
-            container.style.width = '20px';
-            container.style.height = '30px';
-            fakeResizeObserver.fire();
-
-            expect(RFB.messages.setDesktopSize).to.not.have.been.called;
-
-            // Server failed the requested size 40x50
-            sendExtendedDesktopSize(client, 1, 1, 40, 50, 0x7890abcd, 0x12345678);
-
-            expect(RFB.messages.setDesktopSize).to.not.have.been.called;
+            expect(RFB.messages.setDesktopSize).to.have.been.calledWith(sinon.match.object, 40, 50, 0, 0);
         });
 
         it('should not resize when resize is disabled', function () {
@@ -1298,6 +937,7 @@ describe('Remote Frame Buffer protocol client', function () {
             container.style.width = '40px';
             container.style.height = '50px';
             fakeResizeObserver.fire();
+            clock.tick(1000);
 
             expect(RFB.messages.setDesktopSize).to.not.have.been.called;
         });
@@ -1308,6 +948,7 @@ describe('Remote Frame Buffer protocol client', function () {
             container.style.width = '40px';
             container.style.height = '50px';
             fakeResizeObserver.fire();
+            clock.tick(1000);
 
             expect(RFB.messages.setDesktopSize).to.not.have.been.called;
         });
@@ -1318,18 +959,27 @@ describe('Remote Frame Buffer protocol client', function () {
             container.style.width = '40px';
             container.style.height = '50px';
             fakeResizeObserver.fire();
+            clock.tick(1000);
 
             expect(RFB.messages.setDesktopSize).to.not.have.been.called;
         });
 
         it('should not try to override a server resize', function () {
+            // Simple ExtendedDesktopSize FBU message, new size: 100x100
+            const incoming = [ 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
+                               0x00, 0x64, 0x00, 0x64, 0xff, 0xff, 0xfe, 0xcc,
+                               0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                               0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x04,
+                               0x00, 0x00, 0x00, 0x00 ];
+
             // Note that this will cause the browser to display scrollbars
             // since the framebuffer is 100x100 and the container is 70x80.
             // The usable space (clientWidth/clientHeight) will be even smaller
             // due to the scrollbars taking up space.
-            sendExtendedDesktopSize(client, 0, 0, 100, 100, 0xabababab, 0x11223344);
+            client._sock._websocket._receiveData(new Uint8Array(incoming));
             // The scrollbars cause the ResizeObserver to fire
             fakeResizeObserver.fire();
+            clock.tick(1000);
 
             expect(RFB.messages.setDesktopSize).to.not.have.been.called;
 
@@ -1337,14 +987,15 @@ describe('Remote Frame Buffer protocol client', function () {
             container.style.width = '120px';
             container.style.height = '130px';
             fakeResizeObserver.fire();
+            clock.tick(1000);
 
             expect(RFB.messages.setDesktopSize).to.have.been.calledOnce;
-            expect(RFB.messages.setDesktopSize).to.have.been.calledWith(
-                sinon.match.object, 120, 130, 0xabababab, 0x11223344);
+            expect(RFB.messages.setDesktopSize.firstCall.args[1]).to.equal(120);
+            expect(RFB.messages.setDesktopSize.firstCall.args[2]).to.equal(130);
         });
     });
 
-    describe('Misc internals', function () {
+    describe('Misc Internals', function () {
         describe('#_fail', function () {
             let client;
             beforeEach(function () {
@@ -1385,7 +1036,7 @@ describe('Remote Frame Buffer protocol client', function () {
         });
     });
 
-    describe('Protocol initialization states', function () {
+    describe('Protocol Initialization States', function () {
         let client;
         beforeEach(function () {
             client = makeRFB();
@@ -1449,13 +1100,9 @@ describe('Remote Frame Buffer protocol client', function () {
                 });
 
                 it('should fail on an invalid version', function () {
-                    let callback = sinon.spy();
-                    client.addEventListener("disconnect", callback);
-
+                    sinon.spy(client, "_fail");
                     sendVer('002.000', client);
-
-                    expect(callback).to.have.been.calledOnce;
-                    expect(callback.args[0][0].detail.clean).to.be.false;
+                    expect(client._fail).to.have.been.calledOnce;
                 });
             });
 
@@ -1512,38 +1159,32 @@ describe('Remote Frame Buffer protocol client', function () {
             });
 
             it('should fail if there are no supported schemes', function () {
-                let callback = sinon.spy();
-                client.addEventListener("disconnect", callback);
-
+                sinon.spy(client, "_fail");
                 const authSchemes = [1, 32];
                 client._sock._websocket._receiveData(new Uint8Array(authSchemes));
-
-                expect(callback).to.have.been.calledOnce;
-                expect(callback.args[0][0].detail.clean).to.be.false;
+                expect(client._fail).to.have.been.calledOnce;
             });
 
             it('should fail with the appropriate message if no types are sent', function () {
                 const failureData = [0, 0, 0, 0, 6, 119, 104, 111, 111, 112, 115];
-                let callback = sinon.spy();
-                client.addEventListener("securityfailure", callback);
-
+                sinon.spy(client, '_fail');
                 client._sock._websocket._receiveData(new Uint8Array(failureData));
 
-                expect(callback).to.have.been.calledOnce;
-                expect(callback.args[0][0].detail.status).to.equal(1);
-                expect(callback.args[0][0].detail.reason).to.equal("whoops");
+                expect(client._fail).to.have.been.calledOnce;
+                expect(client._fail).to.have.been.calledWith(
+                    'Security negotiation failed on no security types (reason: whoops)');
             });
 
             it('should transition to the Authentication state and continue on successful negotiation', function () {
-                const authSchemes = [1, 2];
-                sinon.spy(client, "_negotiateAuthentication");
+                const authSchemes = [1, 1];
+                client._negotiateAuthentication = sinon.spy();
                 client._sock._websocket._receiveData(new Uint8Array(authSchemes));
                 expect(client._rfbInitState).to.equal('Authentication');
                 expect(client._negotiateAuthentication).to.have.been.calledOnce;
             });
         });
 
-        describe('Legacy authentication', function () {
+        describe('Legacy Authentication', function () {
             it('should fail on auth scheme 0 (pre 3.7) with the given message', function () {
                 const errMsg = "Whoopsies";
                 const data = [0, 0, 0, 0];
@@ -1555,14 +1196,11 @@ describe('Remote Frame Buffer protocol client', function () {
 
                 sendVer('003.006\n', client);
                 client._sock._websocket._getSentData();
-                let callback = sinon.spy();
-                client.addEventListener("securityfailure", callback);
 
+                sinon.spy(client, '_fail');
                 client._sock._websocket._receiveData(new Uint8Array(data));
-
-                expect(callback).to.have.been.calledOnce;
-                expect(callback.args[0][0].detail.status).to.equal(1);
-                expect(callback.args[0][0].detail.reason).to.equal("Whoopsies");
+                expect(client._fail).to.have.been.calledWith(
+                    'Security negotiation failed on authentication scheme (reason: Whoopsies)');
             });
 
             it('should transition straight to ServerInitialisation on "no auth" for versions < 3.7', function () {
@@ -1570,14 +1208,6 @@ describe('Remote Frame Buffer protocol client', function () {
                 client._sock._websocket._getSentData();
 
                 client._sock._websocket._receiveData(new Uint8Array([0, 0, 0, 1]));
-                expect(client._rfbInitState).to.equal('ServerInitialisation');
-            });
-
-            it('should transition straight to ServerInitialisation on "no auth" for versions < 3.8', function () {
-                sendVer('003.007\n', client);
-                client._sock._websocket._getSentData();
-
-                sendSecurity(1, client);
                 expect(client._rfbInitState).to.equal('ServerInitialisation');
             });
         });
@@ -1594,16 +1224,12 @@ describe('Remote Frame Buffer protocol client', function () {
             });
 
             it('should fail on an unknown auth scheme', function () {
-                let callback = sinon.spy();
-                client.addEventListener("disconnect", callback);
-
+                sinon.spy(client, "_fail");
                 sendSecurity(57, client);
-
-                expect(callback).to.have.been.calledOnce;
-                expect(callback.args[0][0].detail.clean).to.be.false;
+                expect(client._fail).to.have.been.calledOnce;
             });
 
-            describe('VNC authentication (type 2) handler', function () {
+            describe('VNC Authentication (type 2) Handler', function () {
                 it('should fire the credentialsrequired event if missing a password', function () {
                     const spy = sinon.spy();
                     client.addEventListener("credentialsrequired", spy);
@@ -1613,505 +1239,44 @@ describe('Remote Frame Buffer protocol client', function () {
                     for (let i = 0; i < 16; i++) { challenge[i] = i; }
                     client._sock._websocket._receiveData(new Uint8Array(challenge));
 
+                    expect(client._rfbCredentials).to.be.empty;
                     expect(spy).to.have.been.calledOnce;
                     expect(spy.args[0][0].detail.types).to.have.members(["password"]);
                 });
 
                 it('should encrypt the password with DES and then send it back', function () {
-                    client.addEventListener("credentialsrequired", () => {
-                        client.sendCredentials({ password: 'passwd' });
-                    });
+                    client._rfbCredentials = { password: 'passwd' };
                     sendSecurity(2, client);
                     client._sock._websocket._getSentData(); // skip the choice of auth reply
 
                     const challenge = [];
                     for (let i = 0; i < 16; i++) { challenge[i] = i; }
                     client._sock._websocket._receiveData(new Uint8Array(challenge));
-                    clock.tick();
 
                     const desPass = RFB.genDES('passwd', challenge);
                     expect(client._sock).to.have.sent(new Uint8Array(desPass));
                 });
 
                 it('should transition to SecurityResult immediately after sending the password', function () {
-                    client.addEventListener("credentialsrequired", () => {
-                        client.sendCredentials({ password: 'passwd' });
-                    });
+                    client._rfbCredentials = { password: 'passwd' };
                     sendSecurity(2, client);
 
                     const challenge = [];
                     for (let i = 0; i < 16; i++) { challenge[i] = i; }
                     client._sock._websocket._receiveData(new Uint8Array(challenge));
-                    clock.tick();
 
                     expect(client._rfbInitState).to.equal('SecurityResult');
                 });
             });
 
-            describe('RSA-AES authentication (type 6) handler', function () {
-                function fakeGetRandomValues(arr) {
-                    if (arr.length === 16) {
-                        arr.set(new Uint8Array([
-                            0x1c, 0x08, 0xfe, 0x21, 0x78, 0xef, 0x4e, 0xf9,
-                            0x3f, 0x05, 0xec, 0xea, 0xd4, 0x6b, 0xa5, 0xd5,
-                        ]));
-                    } else {
-                        arr.set(new Uint8Array([
-                            0xee, 0xe2, 0xf1, 0x5a, 0x3c, 0xa7, 0xbe, 0x95,
-                            0x6f, 0x2a, 0x75, 0xfd, 0x62, 0x01, 0xcb, 0xbf,
-                            0x43, 0x74, 0xca, 0x47, 0x4d, 0xfb, 0x0f, 0xcf,
-                            0x3a, 0x6d, 0x55, 0x6b, 0x59, 0x3a, 0xf6, 0x87,
-                            0xcb, 0x03, 0xb7, 0x28, 0x35, 0x7b, 0x15, 0x8e,
-                            0xb6, 0xc8, 0x8f, 0x2d, 0x5e, 0x7b, 0x1c, 0x9a,
-                            0x32, 0x55, 0xe7, 0x64, 0x36, 0x25, 0x7b, 0xa3,
-                            0xe9, 0x4f, 0x6f, 0x97, 0xdc, 0xa4, 0xd4, 0x62,
-                            0x6d, 0x7f, 0xab, 0x02, 0x6b, 0x13, 0x56, 0x69,
-                            0xfb, 0xd0, 0xd4, 0x13, 0x76, 0xcd, 0x0d, 0xd0,
-                            0x1f, 0xd1, 0x0c, 0x63, 0x3a, 0x34, 0x20, 0x6c,
-                            0xbb, 0x60, 0x45, 0x82, 0x23, 0xfd, 0x7c, 0x77,
-                            0x6d, 0xcc, 0x5e, 0xaa, 0xc3, 0x0c, 0x43, 0xb7,
-                            0x8d, 0xc0, 0x27, 0x6e, 0xeb, 0x1d, 0x6c, 0x5f,
-                            0xd8, 0x1c, 0x3c, 0x1c, 0x60, 0x2e, 0x82, 0x15,
-                            0xfd, 0x2e, 0x5f, 0x3a, 0x15, 0x53, 0x14, 0x70,
-                            0x4f, 0xe1, 0x65, 0x68, 0x35, 0x6d, 0xc7, 0x64,
-                            0xdb, 0xdd, 0x09, 0x31, 0x4f, 0x7b, 0x6d, 0x6c,
-                            0x77, 0x59, 0x5e, 0x1e, 0xfa, 0x4b, 0x06, 0x14,
-                            0xbe, 0xdc, 0x9c, 0x3d, 0x7b, 0xed, 0xf3, 0x2b,
-                            0x19, 0x26, 0x11, 0x8e, 0x3f, 0xab, 0x73, 0x9a,
-                            0x0a, 0x3a, 0xaa, 0x85, 0x06, 0xd5, 0xca, 0x3f,
-                            0xc3, 0xe2, 0x33, 0x7f, 0x97, 0x74, 0x98, 0x8f,
-                            0x2f, 0xa5, 0xfc, 0x7e, 0xb1, 0x77, 0x71, 0x58,
-                            0xf0, 0xbc, 0x04, 0x59, 0xbb, 0xb4, 0xc6, 0xcc,
-                            0x0f, 0x06, 0xcd, 0xa2, 0xd5, 0x01, 0x2f, 0xb2,
-                            0x22, 0x0b, 0xfc, 0x1e, 0x59, 0x9f, 0xd3, 0x4f,
-                            0x30, 0x95, 0xc6, 0x80, 0x0f, 0x69, 0xf3, 0x4a,
-                            0xd4, 0x36, 0xb6, 0x5a, 0x0b, 0x16, 0x0d, 0x81,
-                            0x31, 0xb0, 0x69, 0xd4, 0x4e,
-                        ]));
-                    }
-                }
-
-                async function fakeGeneratekey() {
-                    let key = { "alg": "RSA-OAEP-256",
-                                "d": "B7QR2yI8sXjo8vQhJpX9odqqR6wIuPr" +
-                                     "TM1B1JJEKVeSrr7OYcc1FRJ52Vap9LI" +
-                                     "AU-ezigs9QDvWMxknB8motLnG69Wck3" +
-                                     "7nt9_z4s8lFQp0nROA-oaR92HW34KNL" +
-                                     "1b2fEVWGI0N86h730MvTJC5O2cmKeMe" +
-                                     "zIG-oNqbbfFyP8AW-WLdDlgZm11-Fjz" +
-                                     "hbVpb0Bc7nRSgBPSV-EY6Sl-LuglxDx" +
-                                     "4LaTdQW7QE_WXoRUt-GYGfTseuFQQK5" +
-                                     "WeoyX3yBtQydpauW6rrgyWdtP4hDFIo" +
-                                     "ZsX6w1i-UMWMMwlIB5FdnUSi26igVGA" +
-                                     "DGpV_vGMP36bv-EHp0bY-Qp0gpIfLfgQ",
-                                "dp": "Z1v5UceFfV2bhmbG19eGYb30jFxqoR" +
-                                      "Bq36PKNY7IunMs1keYy0FpLbyGhtgM" +
-                                      "Z1Ymmc8wEzGYsCPEP-ykcun_rlyu7Y" +
-                                      "xmcnyC9YQqTqLyqvO-7rUqDvk9TMfd" +
-                                      "qWFP6heADRhKZmEbmcau6_m2MwwK9k" +
-                                      "OkMKWvpqp8_TpJMnAH7zE",
-                                "dq": "OBacRE15aY3NtCR4cvP5os3sT70JbD" +
-                                      "dDLHT3IHZM6rE35CYNpLDia2chm_wn" +
-                                      "McYvKFW9zC2ajRZ15i9c_VXQzS7ZlT" +
-                                      "aQYBFyMt7kVhxMEMFsPv1crD6t3uEI" +
-                                      "j0LNuNYyy0jkon_LPZKQFK654CiL-L" +
-                                      "2YaNXOH4HbHP02dWeVQIE",
-                                "e": "AQAB",
-                                "ext": true,
-                                "key_ops": ["decrypt"],
-                                "kty": "RSA",
-                                "n": "m1c92ZFk9ZI6l_O4YFiNxbv0Ng94SB3" +
-                                     "yThy1P_mcqrGDQkRiGVdcTxAk38T9Pg" +
-                                     "LztmspF-6U5TAHO-gSmmW88AC9m6f1M" +
-                                     "spps6r7zl-M_OG-TwvGzf3BDz8zEg1F" +
-                                     "PbZV7whO1M4TCAZ0PqwG7qCc6nK1WiA" +
-                                     "haKrSpzuPdL1igfNBsX7qu5wgw4ZTTG" +
-                                     "SLbVC_LfULQ5FADgFTRXUSaxm1F8C_L" +
-                                     "wy6a2e4nTcXilmtN2IHUjHegzm-Tq2H" +
-                                     "izmR3ARdWJpESYIW5-AXoiqj29tDrqC" +
-                                     "mu2WPkB2psVp83IzZfaQNQzjNfvA8Gp" +
-                                     "imkcDCkP5VMRrtKCcG4ZAFnO-A3NBX_Q",
-                                "p": "2Q_lNL7vCOBzAppYzCZo3WSh0hX-MOZ" +
-                                     "yPUznks5U2TjmfdNZoL6_FJRiGyyLvw" +
-                                     "SiZFdEAAvpAyESFfFigngAqMLSf448n" +
-                                     "Pg15VUGj533CotsEM0WpoEr1JCgqdUb" +
-                                     "gDAfJQIBcwOmegBqd7lWm7uzEnRCvou" +
-                                     "B70ybkJfpdprhkVE",
-                                "q": "tzTt-F3g2u_3Ctj26Ho9iN_wC_W0lXG" +
-                                     "zslLt5nLmss8JqdLoDDrijjU-gjeRh7" +
-                                     "lgiuHdUc3dorfFKbaMNOjoW3QKqt9oZ" +
-                                     "1JM0HKeRw0X2PnWW_0WK6DK5ASWDTXb" +
-                                     "Mq2sUZqJvYEyL74H2Zrt0RPAux7XQLE" +
-                                     "VgND6ROdXnMJ70O0",
-                                "qi": "qfl4cXQkz4BNqa2De0-PfdU-8d1w3o" +
-                                      "nnaGqx1Ds2fHzD_SJ4cNghn2TksoT9" +
-                                      "Qo64b3pUjH9igi2pyEjomk6D12N6FG" +
-                                      "0e10u7vFKv3W5YqUOgTpYdbcWHdZ2q" +
-                                      "ZWJU0XQZIrF8jLGTOO4GYP6_9sJ5R7" +
-                                      "Wk_0MdqQy8qvixWD4zLcY",
-                    };
-                    key = await window.crypto.subtle.importKey("jwk", key, {
-                        name: "RSA-OAEP",
-                        hash: {name: "SHA-256"}
-                    }, true, ["decrypt"]);
-                    return {privateKey: key};
-                }
-
-                before(() => {
-                    sinon.stub(window.crypto, "getRandomValues").callsFake(fakeGetRandomValues);
-                    sinon.stub(window.crypto.subtle, "generateKey").callsFake(fakeGeneratekey);
-                });
-                after(() => {
-                    window.crypto.getRandomValues.restore();
-                    window.crypto.subtle.generateKey.restore();
-                });
-
-                beforeEach(function () {
-                    sendSecurity(6, client);
-                    expect(client._sock).to.have.sent(new Uint8Array([6]));
-                });
-
-                const serverPublicKey = [
-                    0x00, 0x00, 0x08, 0x00, 0xac, 0x1a, 0xbc, 0x42,
-                    0x8a, 0x2a, 0x69, 0x65, 0x54, 0xf8, 0x9a, 0xe6,
-                    0x43, 0xaa, 0xf7, 0x27, 0xf6, 0x2a, 0xf8, 0x8f,
-                    0x36, 0xd4, 0xae, 0x54, 0x0f, 0x16, 0x28, 0x08,
-                    0xc2, 0x5b, 0xca, 0x23, 0xdc, 0x27, 0x88, 0x1a,
-                    0x12, 0x82, 0xa8, 0x54, 0xea, 0x00, 0x99, 0x8d,
-                    0x02, 0x1d, 0x77, 0x4a, 0xeb, 0xd0, 0x93, 0x40,
-                    0x79, 0x86, 0xcb, 0x37, 0xd4, 0xb2, 0xc7, 0xcd,
-                    0x93, 0xe1, 0x00, 0x4d, 0x86, 0xff, 0x97, 0x33,
-                    0x0c, 0xad, 0x51, 0x47, 0x45, 0x85, 0x56, 0x07,
-                    0x65, 0x21, 0x7c, 0x57, 0x6d, 0x68, 0x7d, 0xd7,
-                    0x00, 0x43, 0x0c, 0x9d, 0x3b, 0xa1, 0x5a, 0x11,
-                    0xed, 0x51, 0x77, 0xf9, 0xd1, 0x5b, 0x33, 0xd7,
-                    0x1a, 0xeb, 0x65, 0x57, 0xc0, 0x01, 0x51, 0xff,
-                    0x9b, 0x82, 0xb3, 0xeb, 0x82, 0xc2, 0x1f, 0xca,
-                    0x47, 0xc0, 0x6a, 0x09, 0xe0, 0xf7, 0xda, 0x39,
-                    0x85, 0x12, 0xe7, 0x45, 0x8d, 0xb4, 0x1a, 0xda,
-                    0xcb, 0x86, 0x58, 0x52, 0x37, 0x66, 0x9d, 0x8a,
-                    0xce, 0xf2, 0x18, 0x78, 0x7d, 0x7f, 0xf0, 0x07,
-                    0x94, 0x8e, 0x6b, 0x17, 0xd9, 0x00, 0x2a, 0x3a,
-                    0xb9, 0xd4, 0x77, 0xde, 0x70, 0x85, 0xc4, 0x3a,
-                    0x62, 0x10, 0x02, 0xee, 0xba, 0xd8, 0xc0, 0x62,
-                    0xd0, 0x8e, 0xc1, 0x98, 0x19, 0x8e, 0x39, 0x0f,
-                    0x3e, 0x1d, 0x61, 0xb1, 0x93, 0x13, 0x59, 0x39,
-                    0xcb, 0x96, 0xf2, 0x17, 0xc9, 0xe1, 0x41, 0xd3,
-                    0x20, 0xdd, 0x62, 0x5e, 0x7d, 0x53, 0xd6, 0xb7,
-                    0x1d, 0xfe, 0x02, 0x18, 0x1f, 0xe0, 0xef, 0x3d,
-                    0x94, 0xe3, 0x0a, 0x9c, 0x59, 0x54, 0xd8, 0x98,
-                    0x16, 0x9c, 0x31, 0xda, 0x41, 0x0f, 0x2e, 0x71,
-                    0x68, 0xe0, 0xa2, 0x62, 0x3e, 0xe5, 0x25, 0x31,
-                    0xcf, 0xfc, 0x67, 0x63, 0xc3, 0xb0, 0xda, 0x3f,
-                    0x7b, 0x59, 0xbe, 0x7e, 0x9e, 0xa8, 0xd0, 0x01,
-                    0x4f, 0x43, 0x7f, 0x8d, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x01, 0x00, 0x01,
-                ];
-
-                const serverRandom = [
-                    0x01, 0x00, 0x5b, 0x58, 0x2a, 0x96, 0x2d, 0xbb,
-                    0x88, 0xec, 0xc3, 0x54, 0x00, 0xf3, 0xbb, 0xbe,
-                    0x17, 0xa3, 0x84, 0xd3, 0xef, 0xd8, 0x4a, 0x31,
-                    0x09, 0x20, 0xdd, 0xbc, 0x16, 0x9d, 0xc9, 0x5b,
-                    0x99, 0x62, 0x86, 0xfe, 0x0b, 0x28, 0x4b, 0xfe,
-                    0x5b, 0x56, 0x2d, 0xcb, 0x6e, 0x6f, 0xec, 0xf0,
-                    0x53, 0x0c, 0x33, 0x84, 0x93, 0xc9, 0xbf, 0x79,
-                    0xde, 0xb3, 0xb9, 0x29, 0x60, 0x78, 0xde, 0xe6,
-                    0x1d, 0xa7, 0x89, 0x48, 0x3f, 0xd1, 0x58, 0x66,
-                    0x27, 0x9c, 0xd4, 0x6e, 0x72, 0x9c, 0x6e, 0x4a,
-                    0xc0, 0x69, 0x79, 0x6f, 0x79, 0x0f, 0x13, 0xc4,
-                    0x20, 0xcf, 0xa6, 0xbb, 0xce, 0x18, 0x6d, 0xd5,
-                    0x9e, 0xd9, 0x67, 0xbe, 0x61, 0x43, 0x67, 0x11,
-                    0x76, 0x2f, 0xfd, 0x78, 0x75, 0x2b, 0x89, 0x35,
-                    0xdd, 0x0f, 0x13, 0x7f, 0xee, 0x78, 0xad, 0x32,
-                    0x56, 0x21, 0x81, 0x08, 0x1f, 0xcf, 0x4c, 0x29,
-                    0xa3, 0xeb, 0x89, 0x2d, 0xbe, 0xba, 0x8d, 0xe4,
-                    0x69, 0x28, 0xba, 0x53, 0x82, 0xce, 0x5c, 0xf6,
-                    0x5e, 0x5e, 0xa5, 0xb3, 0x88, 0xd8, 0x3d, 0xab,
-                    0xf4, 0x24, 0x9e, 0x3f, 0x04, 0xaf, 0xdc, 0x48,
-                    0x90, 0x53, 0x37, 0xe6, 0x82, 0x1d, 0xe0, 0x15,
-                    0x91, 0xa1, 0xc6, 0xa9, 0x54, 0xe5, 0x2a, 0xb5,
-                    0x64, 0x2d, 0x93, 0xc0, 0xc0, 0xe1, 0x0f, 0x6a,
-                    0x4b, 0xdb, 0x77, 0xf8, 0x4a, 0x0f, 0x83, 0x36,
-                    0xdd, 0x5e, 0x1e, 0xdd, 0x39, 0x65, 0xa2, 0x11,
-                    0xc2, 0xcf, 0x56, 0x1e, 0xa1, 0x29, 0xae, 0x11,
-                    0x9f, 0x3a, 0x82, 0xc7, 0xbd, 0x89, 0x6e, 0x59,
-                    0xb8, 0x59, 0x17, 0xcb, 0x65, 0xa0, 0x4b, 0x4d,
-                    0xbe, 0x33, 0x32, 0x85, 0x9c, 0xca, 0x5e, 0x95,
-                    0xc2, 0x5a, 0xd0, 0xc9, 0x8b, 0xf1, 0xf5, 0x14,
-                    0xcf, 0x76, 0x80, 0xc2, 0x24, 0x0a, 0x39, 0x7e,
-                    0x60, 0x64, 0xce, 0xd9, 0xb8, 0xad, 0x24, 0xa8,
-                    0xdf, 0xcb,
-                ];
-
-                const serverHash = [
-                    0x00, 0x14, 0x39, 0x30, 0x66, 0xb5, 0x66, 0x8a,
-                    0xcd, 0xb9, 0xda, 0xe0, 0xde, 0xcb, 0xf6, 0x47,
-                    0x5f, 0x54, 0x66, 0xe0, 0xbc, 0x49, 0x37, 0x01,
-                    0xf2, 0x9e, 0xef, 0xcc, 0xcd, 0x4d, 0x6c, 0x0e,
-                    0xc6, 0xab, 0x28, 0xd4, 0x7b, 0x13,
-                ];
-
-                const subType = [
-                    0x00, 0x01, 0x30, 0x2a, 0xc3, 0x0b, 0xc2, 0x1c,
-                    0xeb, 0x02, 0x44, 0x92, 0x5d, 0xfd, 0xf9, 0xa7,
-                    0x94, 0xd0, 0x19,
-                ];
-
-                const clientPublicKey = [
-                    0x00, 0x00, 0x08, 0x00, 0x9b, 0x57, 0x3d, 0xd9,
-                    0x91, 0x64, 0xf5, 0x92, 0x3a, 0x97, 0xf3, 0xb8,
-                    0x60, 0x58, 0x8d, 0xc5, 0xbb, 0xf4, 0x36, 0x0f,
-                    0x78, 0x48, 0x1d, 0xf2, 0x4e, 0x1c, 0xb5, 0x3f,
-                    0xf9, 0x9c, 0xaa, 0xb1, 0x83, 0x42, 0x44, 0x62,
-                    0x19, 0x57, 0x5c, 0x4f, 0x10, 0x24, 0xdf, 0xc4,
-                    0xfd, 0x3e, 0x02, 0xf3, 0xb6, 0x6b, 0x29, 0x17,
-                    0xee, 0x94, 0xe5, 0x30, 0x07, 0x3b, 0xe8, 0x12,
-                    0x9a, 0x65, 0xbc, 0xf0, 0x00, 0xbd, 0x9b, 0xa7,
-                    0xf5, 0x32, 0xca, 0x69, 0xb3, 0xaa, 0xfb, 0xce,
-                    0x5f, 0x8c, 0xfc, 0xe1, 0xbe, 0x4f, 0x0b, 0xc6,
-                    0xcd, 0xfd, 0xc1, 0x0f, 0x3f, 0x33, 0x12, 0x0d,
-                    0x45, 0x3d, 0xb6, 0x55, 0xef, 0x08, 0x4e, 0xd4,
-                    0xce, 0x13, 0x08, 0x06, 0x74, 0x3e, 0xac, 0x06,
-                    0xee, 0xa0, 0x9c, 0xea, 0x72, 0xb5, 0x5a, 0x20,
-                    0x21, 0x68, 0xaa, 0xd2, 0xa7, 0x3b, 0x8f, 0x74,
-                    0xbd, 0x62, 0x81, 0xf3, 0x41, 0xb1, 0x7e, 0xea,
-                    0xbb, 0x9c, 0x20, 0xc3, 0x86, 0x53, 0x4c, 0x64,
-                    0x8b, 0x6d, 0x50, 0xbf, 0x2d, 0xf5, 0x0b, 0x43,
-                    0x91, 0x40, 0x0e, 0x01, 0x53, 0x45, 0x75, 0x12,
-                    0x6b, 0x19, 0xb5, 0x17, 0xc0, 0xbf, 0x2f, 0x0c,
-                    0xba, 0x6b, 0x67, 0xb8, 0x9d, 0x37, 0x17, 0x8a,
-                    0x59, 0xad, 0x37, 0x62, 0x07, 0x52, 0x31, 0xde,
-                    0x83, 0x39, 0xbe, 0x4e, 0xad, 0x87, 0x8b, 0x39,
-                    0x91, 0xdc, 0x04, 0x5d, 0x58, 0x9a, 0x44, 0x49,
-                    0x82, 0x16, 0xe7, 0xe0, 0x17, 0xa2, 0x2a, 0xa3,
-                    0xdb, 0xdb, 0x43, 0xae, 0xa0, 0xa6, 0xbb, 0x65,
-                    0x8f, 0x90, 0x1d, 0xa9, 0xb1, 0x5a, 0x7c, 0xdc,
-                    0x8c, 0xd9, 0x7d, 0xa4, 0x0d, 0x43, 0x38, 0xcd,
-                    0x7e, 0xf0, 0x3c, 0x1a, 0x98, 0xa6, 0x91, 0xc0,
-                    0xc2, 0x90, 0xfe, 0x55, 0x31, 0x1a, 0xed, 0x28,
-                    0x27, 0x06, 0xe1, 0x90, 0x05, 0x9c, 0xef, 0x80,
-                    0xdc, 0xd0, 0x57, 0xfd, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                    0x00, 0x01, 0x00, 0x01,
-                ];
-
-                const clientRandom = [
-                    0x01, 0x00, 0x84, 0x7f, 0x26, 0x54, 0x74, 0xf6,
-                    0x47, 0xaf, 0x33, 0x64, 0x0d, 0xa6, 0xe5, 0x30,
-                    0xba, 0xe6, 0xe4, 0x8e, 0x50, 0x40, 0x71, 0x1c,
-                    0x0e, 0x06, 0x63, 0xf5, 0x07, 0x2a, 0x26, 0x68,
-                    0xd6, 0xcf, 0xa6, 0x80, 0x84, 0x5e, 0x64, 0xd4,
-                    0x5e, 0x62, 0x31, 0xfe, 0x44, 0x51, 0x0b, 0x7c,
-                    0x4d, 0x55, 0xc5, 0x4a, 0x7e, 0x0d, 0x4d, 0x9b,
-                    0x84, 0xb4, 0x32, 0x2b, 0x4d, 0x8a, 0x34, 0x8d,
-                    0xc8, 0xcf, 0x19, 0x3b, 0x64, 0x82, 0x27, 0x9e,
-                    0xa7, 0x70, 0x2a, 0xc1, 0xb8, 0xf3, 0x6a, 0x3a,
-                    0xf2, 0x75, 0x6e, 0x1d, 0xeb, 0xb6, 0x70, 0x7a,
-                    0x15, 0x18, 0x38, 0x00, 0xb4, 0x4f, 0x55, 0xb5,
-                    0xd8, 0x03, 0x4e, 0xb8, 0x53, 0xff, 0x80, 0x62,
-                    0xf1, 0x9d, 0x27, 0xe8, 0x2a, 0x3d, 0x98, 0x19,
-                    0x32, 0x09, 0x7e, 0x9a, 0xb0, 0xc7, 0x46, 0x23,
-                    0x10, 0x85, 0x35, 0x00, 0x96, 0xce, 0xb3, 0x2c,
-                    0x84, 0x8d, 0xf4, 0x9e, 0xa8, 0x42, 0x67, 0xed,
-                    0x09, 0xa6, 0x09, 0x97, 0xb3, 0x64, 0x26, 0xfb,
-                    0x71, 0x11, 0x9b, 0x3f, 0xbb, 0x57, 0xb8, 0x5b,
-                    0x2e, 0xc5, 0x2d, 0x8c, 0x5c, 0xf7, 0xef, 0x27,
-                    0x25, 0x88, 0x42, 0x45, 0x43, 0xa4, 0xe7, 0xde,
-                    0xea, 0xf9, 0x15, 0x7b, 0x5d, 0x66, 0x24, 0xce,
-                    0xf7, 0xc8, 0x2f, 0xc5, 0xc0, 0x3d, 0xcd, 0xf2,
-                    0x62, 0xfc, 0x1a, 0x5e, 0xec, 0xff, 0xf1, 0x1b,
-                    0xc8, 0xdb, 0xc1, 0x0f, 0x54, 0x66, 0x9e, 0xfd,
-                    0x99, 0x9b, 0x23, 0x70, 0x62, 0x37, 0x80, 0xad,
-                    0x91, 0x6b, 0x84, 0x85, 0x6a, 0x4c, 0x80, 0x9e,
-                    0x60, 0x8a, 0x93, 0xa3, 0xc8, 0x8e, 0xc4, 0x4b,
-                    0x4d, 0xb4, 0x8e, 0x3e, 0xaf, 0xce, 0xcd, 0x83,
-                    0xe5, 0x21, 0x90, 0x95, 0x20, 0x3c, 0x82, 0xb4,
-                    0x7c, 0xab, 0x63, 0x9c, 0xae, 0xc3, 0xc9, 0x71,
-                    0x1a, 0xec, 0x34, 0x18, 0x47, 0xec, 0x5c, 0x4d,
-                    0xed, 0x84,
-                ];
-
-                const clientHash = [
-                    0x00, 0x14, 0x9c, 0x91, 0x9e, 0x76, 0xcf, 0x1e,
-                    0x66, 0x87, 0x5e, 0x29, 0xf1, 0x13, 0x80, 0xea,
-                    0x7d, 0xec, 0xae, 0xf9, 0x60, 0x01, 0xd3, 0x6f,
-                    0xb7, 0x9e, 0xb2, 0xcd, 0x2d, 0xc8, 0xf8, 0x84,
-                    0xb2, 0x9f, 0xc3, 0x7e, 0xb4, 0xbe,
-                ];
-
-                const credentialsData = [
-                    0x00, 0x08, 0x9d, 0xc8, 0x3a, 0xb8, 0x80, 0x4f,
-                    0xe3, 0x52, 0xdb, 0x62, 0x9e, 0x97, 0x64, 0x82,
-                    0xa8, 0xa1, 0x6b, 0x7e, 0x4d, 0x68, 0x8c, 0x29,
-                    0x91, 0x38,
-                ];
-
-                it('should fire the serververification event', async function () {
-                    let verification = new Promise((resolve, reject) => {
-                        client.addEventListener("serververification", (e) => {
-                            resolve(e.detail.publickey);
-                        });
-                    });
-
-                    client._sock._websocket._receiveData(new Uint8Array(serverPublicKey));
-                    client._sock._websocket._receiveData(new Uint8Array(serverRandom));
-
-                    expect(await verification).to.deep.equal(new Uint8Array(serverPublicKey));
-                });
-
-                it('should handle approveServer and fire the credentialsrequired event', async function () {
-                    let verification = new Promise((resolve, reject) => {
-                        client.addEventListener("serververification", (e) => {
-                            resolve(e.detail.publickey);
-                        });
-                    });
-                    let credentials = new Promise((resolve, reject) => {
-                        client.addEventListener("credentialsrequired", (e) => {
-                            resolve(e.detail.types);
-                        });
-                    });
-
-                    client._sock._websocket._receiveData(new Uint8Array(serverPublicKey));
-                    client._sock._websocket._receiveData(new Uint8Array(serverRandom));
-
-                    await verification;
-                    client.approveServer();
-
-                    client._sock._websocket._receiveData(new Uint8Array(serverHash));
-                    client._sock._websocket._receiveData(new Uint8Array(subType));
-
-                    expect(await credentials).to.have.members(["password"]);
-                });
-
-                it('should send credentials to server', async function () {
-                    let verification = new Promise((resolve, reject) => {
-                        client.addEventListener("serververification", (e) => {
-                            resolve(e.detail.publickey);
-                        });
-                    });
-                    let credentials = new Promise((resolve, reject) => {
-                        client.addEventListener("credentialsrequired", (e) => {
-                            resolve(e.detail.types);
-                        });
-                    });
-
-                    client._sock._websocket._receiveData(new Uint8Array(serverPublicKey));
-                    client._sock._websocket._receiveData(new Uint8Array(serverRandom));
-
-                    await verification;
-                    client.approveServer();
-
-                    client._sock._websocket._receiveData(new Uint8Array(serverHash));
-                    client._sock._websocket._receiveData(new Uint8Array(subType));
-
-                    await credentials;
-
-                    let expected = [];
-                    expected = expected.concat(clientPublicKey);
-                    expected = expected.concat(clientRandom);
-                    expected = expected.concat(clientHash);
-                    expect(client._sock).to.have.sent(new Uint8Array(expected));
-
-                    client.sendCredentials({ "password": "123456" });
-                    clock.tick();
-
-                    // FIXME: We don't have a good way to know when
-                    //        the async stuff is done, so we hook in
-                    //        to this internal function that is
-                    //        called at the end
-                    await new Promise((resolve, reject) => {
-                        sinon.stub(client._sock._websocket, "send")
-                            .callsFake((data) => {
-                                FakeWebSocket.prototype.send.call(client._sock._websocket, data);
-                                resolve();
-                            });
-                    });
-
-                    expect(client._sock).to.have.sent(new Uint8Array(credentialsData));
-                });
-            });
-
-            describe('ARD authentication (type 30) handler', function () {
-                let byteArray = new Uint8Array(Array.from(new Uint8Array(128).keys()));
-                function fakeGetRandomValues(arr) {
-                    if (arr.length == 128) {
-                        arr.set(byteArray);
-                    }
-                    return arr;
-                }
-                before(() => {
-                    sinon.stub(window.crypto, "getRandomValues").callsFake(fakeGetRandomValues);
-                });
-                after(() => {
-                    window.crypto.getRandomValues.restore();
-                });
+            describe('ARD Authentication (type 30) Handler', function () {
                 it('should fire the credentialsrequired event if all credentials are missing', function () {
                     const spy = sinon.spy();
                     client.addEventListener("credentialsrequired", spy);
+                    client._rfbCredentials = {};
                     sendSecurity(30, client);
 
+                    expect(client._rfbCredentials).to.be.empty;
                     expect(spy).to.have.been.calledOnce;
                     expect(spy.args[0][0].detail.types).to.have.members(["username", "password"]);
                 });
@@ -2119,7 +1284,7 @@ describe('Remote Frame Buffer protocol client', function () {
                 it('should fire the credentialsrequired event if some credentials are missing', function () {
                     const spy = sinon.spy();
                     client.addEventListener("credentialsrequired", spy);
-                    client.sendCredentials({ password: 'password'});
+                    client._rfbCredentials = { password: 'password'};
                     sendSecurity(30, client);
 
                     expect(spy).to.have.been.calledOnce;
@@ -2127,56 +1292,41 @@ describe('Remote Frame Buffer protocol client', function () {
                 });
 
                 it('should return properly encrypted credentials and public key', async function () {
-                    client.addEventListener("credentialsrequired", () => {
-                        client.sendCredentials({ username: 'user',
-                                                 password: 'password' });
-                    });
+                    client._rfbCredentials = { username: 'user',
+                                               password: 'password' };
                     sendSecurity(30, client);
 
                     expect(client._sock).to.have.sent([30]);
 
-                    const generator = new Uint8Array([127, 255]);
-                    const prime = new Uint8Array(byteArray);
-                    const serverKey = legacyCrypto.generateKey(
-                        { name: "DH", g: generator, p: prime }, false, ["deriveBits"]);
-                    const clientKey = legacyCrypto.generateKey(
-                        { name: "DH", g: generator, p: prime }, false, ["deriveBits"]);
-                    const serverPublicKey = legacyCrypto.exportKey("raw", serverKey.publicKey);
-                    const clientPublicKey = legacyCrypto.exportKey("raw", clientKey.publicKey);
+                    function byteArray(length) {
+                        return Array.from(new Uint8Array(length).keys());
+                    }
 
-                    let data = [];
+                    let generator = [127, 255];
+                    let prime = byteArray(128);
+                    let serverPrivateKey = byteArray(128);
+                    let serverPublicKey = client._modPow(generator, serverPrivateKey, prime);
 
-                    data = data.concat(Array.from(generator));
-                    push16(data, prime.length);
-                    data = data.concat(Array.from(prime));
-                    data = data.concat(Array.from(serverPublicKey));
+                    let clientPrivateKey = byteArray(128);
+                    let clientPublicKey = client._modPow(generator, clientPrivateKey, prime);
 
-                    client._sock._websocket._receiveData(new Uint8Array(data));
+                    let padding = Array.from(byteArray(64), byte => String.fromCharCode(65+byte%26)).join('');
 
-                    // FIXME: We don't have a good way to know when the
-                    //        async stuff is done, so we hook in to this
-                    //        internal function that is called at the
-                    //        end
-                    await new Promise((resolve, reject) => {
-                        sinon.stub(client, "_resumeAuthentication")
-                            .callsFake(() => {
-                                RFB.prototype._resumeAuthentication.call(client);
-                                resolve();
-                            });
-                    });
-                    clock.tick();
+                    await client._negotiateARDAuthAsync(generator, 128, prime, serverPublicKey, clientPrivateKey, padding);
+
+                    client._negotiateARDAuth();
 
                     expect(client._rfbInitState).to.equal('SecurityResult');
 
                     let expectEncrypted = new Uint8Array([
-                        199, 39, 204, 95, 190, 70, 127, 66, 5, 106, 153, 228, 123, 236, 150, 206,
-                        62, 107, 11, 4, 21, 242, 92, 184, 9, 81, 35, 125, 56, 167, 1, 215,
-                        182, 145, 183, 75, 245, 197, 47, 19, 122, 94, 64, 76, 77, 163, 222, 143,
-                        186, 174, 84, 39, 244, 179, 227, 114, 83, 231, 42, 106, 205, 43, 159, 110,
-                        209, 240, 157, 246, 237, 206, 134, 153, 195, 112, 92, 60, 28, 234, 91, 66,
-                        131, 38, 187, 195, 110, 167, 212, 241, 32, 250, 212, 213, 202, 89, 180, 21,
-                        71, 217, 209, 81, 42, 61, 118, 248, 65, 123, 98, 78, 139, 111, 202, 137,
-                        50, 185, 37, 173, 58, 99, 187, 53, 42, 125, 13, 165, 232, 163, 151, 42, 0]);
+                        232, 234, 159, 162, 170, 180, 138, 104, 164, 49, 53, 96, 20, 36, 21, 15,
+                        217, 219, 107, 173, 196, 60, 96, 142, 215, 71, 13, 185, 185, 47, 5, 175,
+                        151, 30, 194, 55, 173, 214, 141, 161, 36, 138, 146, 3, 178, 89, 43, 248,
+                        131, 134, 205, 174, 9, 150, 171, 74, 222, 201, 20, 2, 30, 168, 162, 123,
+                        46, 86, 81, 221, 44, 211, 180, 247, 221, 61, 95, 155, 157, 241, 76, 76,
+                        49, 217, 234, 75, 147, 237, 199, 159, 93, 140, 191, 174, 52, 90, 133, 58,
+                        243, 81, 112, 182, 64, 62, 149, 7, 151, 28, 36, 161, 247, 247, 36, 96,
+                        230, 95, 58, 207, 46, 183, 100, 139, 143, 155, 224, 43, 219, 3, 71, 139]);
 
                     let output = new Uint8Array(256);
                     output.set(expectEncrypted, 0);
@@ -2186,7 +1336,7 @@ describe('Remote Frame Buffer protocol client', function () {
                 });
             });
 
-            describe('MSLogonII authentication (type 113) handler', function () {
+            describe('MSLogonII Authentication (type 113) Handler', function () {
                 function fakeGetRandomValues(arr) {
                     if (arr.length == 8) {
                         arr.set(new Uint8Array([0, 0, 0, 0, 5, 6, 7, 8]));
@@ -2247,10 +1397,8 @@ describe('Remote Frame Buffer protocol client', function () {
                     window.crypto.getRandomValues.restore();
                 });
                 it('should send public value and encrypted credentials', function () {
-                    client.addEventListener("credentialsrequired", () => {
-                        client.sendCredentials({ username: 'username',
-                                                 password: 'password123456' });
-                    });
+                    client._rfbCredentials = { username: 'username',
+                                               password: 'password123456' };
                     sendSecurity(113, client);
 
                     expect(client._sock).to.have.sent([113]);
@@ -2262,31 +1410,29 @@ describe('Remote Frame Buffer protocol client', function () {
                     client._sock._websocket._receiveData(g);
                     client._sock._websocket._receiveData(p);
                     client._sock._websocket._receiveData(A);
-                    clock.tick();
 
                     expect(client._sock).to.have.sent(expected);
                     expect(client._rfbInitState).to.equal('SecurityResult');
                 });
             });
 
-            describe('XVP authentication (type 22) handler', function () {
+            describe('XVP Authentication (type 22) Handler', function () {
                 it('should fall through to standard VNC authentication upon completion', function () {
-                    client.addEventListener("credentialsrequired", () => {
-                        client.sendCredentials({ username: 'user',
-                                                 target: 'target',
-                                                 password: 'password' });
-                    });
-                    sinon.spy(client, "_negotiateStdVNCAuth");
+                    client._rfbCredentials = { username: 'user',
+                                               target: 'target',
+                                               password: 'password' };
+                    client._negotiateStdVNCAuth = sinon.spy();
                     sendSecurity(22, client);
-                    clock.tick();
                     expect(client._negotiateStdVNCAuth).to.have.been.calledOnce;
                 });
 
                 it('should fire the credentialsrequired event if all credentials are missing', function () {
                     const spy = sinon.spy();
                     client.addEventListener("credentialsrequired", spy);
+                    client._rfbCredentials = {};
                     sendSecurity(22, client);
 
+                    expect(client._rfbCredentials).to.be.empty;
                     expect(spy).to.have.been.calledOnce;
                     expect(spy.args[0][0].detail.types).to.have.members(["username", "password", "target"]);
                 });
@@ -2294,8 +1440,8 @@ describe('Remote Frame Buffer protocol client', function () {
                 it('should fire the credentialsrequired event if some credentials are missing', function () {
                     const spy = sinon.spy();
                     client.addEventListener("credentialsrequired", spy);
-                    client.sendCredentials({ username: 'user',
-                                             target: 'target' });
+                    client._rfbCredentials = { username: 'user',
+                                               target: 'target' };
                     sendSecurity(22, client);
 
                     expect(spy).to.have.been.calledOnce;
@@ -2303,13 +1449,12 @@ describe('Remote Frame Buffer protocol client', function () {
                 });
 
                 it('should send user and target separately', function () {
-                    client.addEventListener("credentialsrequired", () => {
-                        client.sendCredentials({ username: 'user',
-                                                 target: 'target',
-                                                 password: 'password' });
-                    });
+                    client._rfbCredentials = { username: 'user',
+                                               target: 'target',
+                                               password: 'password' };
+                    client._negotiateStdVNCAuth = sinon.spy();
+
                     sendSecurity(22, client);
-                    clock.tick();
 
                     const expected = [22, 4, 6]; // auth selection, len user, len target
                     for (let i = 0; i < 10; i++) { expected[i+3] = 'usertarget'.charCodeAt(i); }
@@ -2318,7 +1463,7 @@ describe('Remote Frame Buffer protocol client', function () {
                 });
             });
 
-            describe('TightVNC authentication (type 16) handler', function () {
+            describe('TightVNC Authentication (type 16) Handler', function () {
                 beforeEach(function () {
                     sendSecurity(16, client);
                     client._sock._websocket._getSentData();  // skip the security reply
@@ -2347,13 +1492,9 @@ describe('Remote Frame Buffer protocol client', function () {
                 });
 
                 it('should fail if no supported tunnels are listed', function () {
-                    let callback = sinon.spy();
-                    client.addEventListener("disconnect", callback);
-
+                    sinon.spy(client, "_fail");
                     sendNumStrPairs([[123, 'OTHR', 'SOMETHNG']], client);
-
-                    expect(callback).to.have.been.calledOnce;
-                    expect(callback.args[0][0].detail.clean).to.be.false;
+                    expect(client._fail).to.have.been.calledOnce;
                 });
 
                 it('should choose the notunnel tunnel type', function () {
@@ -2374,18 +1515,25 @@ describe('Remote Frame Buffer protocol client', function () {
                     expect(client._rfbInitState).to.equal('SecurityResult');
                 });
 
+                /*it('should attempt to use VNC auth over no auth when possible', function () {
+                    client._rfbTightVNC = true;
+                    client._negotiateStdVNCAuth = sinon.spy();
+                    sendNumStrPairs([[1, 'STDV', 'NOAUTH__'], [2, 'STDV', 'VNCAUTH_']], client);
+                    expect(client._sock).to.have.sent([0, 0, 0, 1]);
+                    expect(client._negotiateStdVNCAuth).to.have.been.calledOnce;
+                    expect(client._rfbAuthScheme).to.equal(2);
+                });*/ // while this would make sense, the original code doesn't actually do this
+
                 it('should accept the "no auth" auth type and transition to SecurityResult', function () {
-                    sendNumStrPairs([[0, 'TGHT', 'NOTUNNEL']], client);
-                    client._sock._websocket._getSentData();  // skip the tunnel choice here
+                    client._rfbTightVNC = true;
                     sendNumStrPairs([[1, 'STDV', 'NOAUTH__']], client);
                     expect(client._sock).to.have.sent(new Uint8Array([0, 0, 0, 1]));
                     expect(client._rfbInitState).to.equal('SecurityResult');
                 });
 
                 it('should accept VNC authentication and transition to that', function () {
-                    sendNumStrPairs([[0, 'TGHT', 'NOTUNNEL']], client);
-                    client._sock._websocket._getSentData();  // skip the tunnel choice here
-                    sinon.spy(client, "_negotiateStdVNCAuth");
+                    client._rfbTightVNC = true;
+                    client._negotiateStdVNCAuth = sinon.spy();
                     sendNumStrPairs([[2, 'STDV', 'VNCAUTH__']], client);
                     expect(client._sock).to.have.sent(new Uint8Array([0, 0, 0, 2]));
                     expect(client._negotiateStdVNCAuth).to.have.been.calledOnce;
@@ -2393,32 +1541,23 @@ describe('Remote Frame Buffer protocol client', function () {
                 });
 
                 it('should fail if there are no supported auth types', function () {
-                    let callback = sinon.spy();
-                    client.addEventListener("disconnect", callback);
-
-                    sendNumStrPairs([[0, 'TGHT', 'NOTUNNEL']], client);
-                    client._sock._websocket._getSentData();  // skip the tunnel choice here
+                    sinon.spy(client, "_fail");
+                    client._rfbTightVNC = true;
                     sendNumStrPairs([[23, 'stdv', 'badval__']], client);
-
-                    expect(callback).to.have.been.calledOnce;
-                    expect(callback.args[0][0].detail.clean).to.be.false;
+                    expect(client._fail).to.have.been.calledOnce;
                 });
             });
 
-            describe('VeNCrypt authentication (type 19) handler', function () {
+            describe('VeNCrypt Authentication (type 19) Handler', function () {
                 beforeEach(function () {
                     sendSecurity(19, client);
                     expect(client._sock).to.have.sent(new Uint8Array([19]));
                 });
 
                 it('should fail with non-0.2 versions', function () {
-                    let callback = sinon.spy();
-                    client.addEventListener("disconnect", callback);
-
+                    sinon.spy(client, "_fail");
                     client._sock._websocket._receiveData(new Uint8Array([0, 1]));
-
-                    expect(callback).to.have.been.calledOnce;
-                    expect(callback.args[0][0].detail.clean).to.be.false;
+                    expect(client._fail).to.have.been.calledOnce;
                 });
 
                 it('should fail if there are no supported subtypes', function () {
@@ -2428,11 +1567,9 @@ describe('Remote Frame Buffer protocol client', function () {
                     // Server ACK.
                     client._sock._websocket._receiveData(new Uint8Array([0]));
                     // Subtype list
-                    let callback = sinon.spy();
-                    client.addEventListener("disconnect", callback);
+                    sinon.spy(client, "_fail");
                     client._sock._websocket._receiveData(new Uint8Array([2, 0, 0, 0, 9, 0, 0, 1, 4]));
-                    expect(callback).to.have.been.calledOnce;
-                    expect(callback.args[0][0].detail.clean).to.be.false;
+                    expect(client._fail).to.have.been.calledOnce;
                 });
 
                 it('should support standard types', function () {
@@ -2486,103 +1623,89 @@ describe('Remote Frame Buffer protocol client', function () {
 
                     expect(client._sock).to.have.sent(new Uint8Array(expectedResponse));
                 });
-            });
 
-            describe('Plain authentication (type 256) handler', function () {
-                beforeEach(function () {
-                    sendSecurity(19, client);
-                    expect(client._sock).to.have.sent(new Uint8Array([19]));
+                it('should support Plain authentication', function () {
+                    client._rfbCredentials = { username: 'username', password: 'password' };
                     // VeNCrypt version
                     client._sock._websocket._receiveData(new Uint8Array([0, 2]));
                     expect(client._sock).to.have.sent(new Uint8Array([0, 2]));
                     // Server ACK.
                     client._sock._websocket._receiveData(new Uint8Array([0]));
-                });
-
-                it('should support Plain authentication', function () {
-                    client.addEventListener("credentialsrequired", () => {
-                        client.sendCredentials({ username: 'username', password: 'password' });
-                    });
+                    // Subtype list.
                     client._sock._websocket._receiveData(new Uint8Array([1, 0, 0, 1, 0]));
-                    expect(client._sock).to.have.sent(new Uint8Array([0, 0, 1, 0]));
-
-                    clock.tick();
 
                     const expectedResponse = [];
-                    push32(expectedResponse, 8);
-                    push32(expectedResponse, 8);
-                    pushString(expectedResponse, 'username');
-                    pushString(expectedResponse, 'password');
+                    push32(expectedResponse, 256); // Chosen subtype.
+                    push32(expectedResponse, client._rfbCredentials.username.length);
+                    push32(expectedResponse, client._rfbCredentials.password.length);
+                    pushString(expectedResponse, client._rfbCredentials.username);
+                    pushString(expectedResponse, client._rfbCredentials.password);
                     expect(client._sock).to.have.sent(new Uint8Array(expectedResponse));
+
+                    client._initMsg = sinon.spy();
+                    client._sock._websocket._receiveData(new Uint8Array([0, 0, 0, 0]));
+                    expect(client._initMsg).to.have.been.called;
                 });
 
                 it('should support Plain authentication with an empty password', function () {
-                    client.addEventListener("credentialsrequired", () => {
-                        client.sendCredentials({ username: 'username', password: '' });
-                    });
+                    client._rfbCredentials = { username: 'username', password: '' };
+                    // VeNCrypt version
+                    client._sock._websocket._receiveData(new Uint8Array([0, 2]));
+                    expect(client._sock).to.have.sent(new Uint8Array([0, 2]));
+                    // Server ACK.
+                    client._sock._websocket._receiveData(new Uint8Array([0]));
+                    // Subtype list.
                     client._sock._websocket._receiveData(new Uint8Array([1, 0, 0, 1, 0]));
-                    expect(client._sock).to.have.sent(new Uint8Array([0, 0, 1, 0]));
-
-                    clock.tick();
 
                     const expectedResponse = [];
-                    push32(expectedResponse, 8);
-                    push32(expectedResponse, 0);
-                    pushString(expectedResponse, 'username');
-                    pushString(expectedResponse, '');
+                    push32(expectedResponse, 256); // Chosen subtype.
+                    push32(expectedResponse, client._rfbCredentials.username.length);
+                    push32(expectedResponse, client._rfbCredentials.password.length);
+                    pushString(expectedResponse, client._rfbCredentials.username);
+                    pushString(expectedResponse, client._rfbCredentials.password);
                     expect(client._sock).to.have.sent(new Uint8Array(expectedResponse));
+
+                    client._initMsg = sinon.spy();
+                    client._sock._websocket._receiveData(new Uint8Array([0, 0, 0, 0]));
+                    expect(client._initMsg).to.have.been.called;
                 });
 
                 it('should support Plain authentication with a very long username and password', function () {
-                    client.addEventListener("credentialsrequired", () => {
-                        client.sendCredentials({ username: 'a'.repeat(300), password: 'b'.repeat(300) });
-                    });
+                    client._rfbCredentials = { username: 'a'.repeat(300), password: 'a'.repeat(300) };
+                    // VeNCrypt version
+                    client._sock._websocket._receiveData(new Uint8Array([0, 2]));
+                    expect(client._sock).to.have.sent(new Uint8Array([0, 2]));
+                    // Server ACK.
+                    client._sock._websocket._receiveData(new Uint8Array([0]));
+                    // Subtype list.
                     client._sock._websocket._receiveData(new Uint8Array([1, 0, 0, 1, 0]));
-                    expect(client._sock).to.have.sent(new Uint8Array([0, 0, 1, 0]));
-
-                    clock.tick();
 
                     const expectedResponse = [];
-                    push32(expectedResponse, 300);
-                    push32(expectedResponse, 300);
-                    pushString(expectedResponse, 'a'.repeat(300));
-                    pushString(expectedResponse, 'b'.repeat(300));
+                    push32(expectedResponse, 256); // Chosen subtype.
+                    push32(expectedResponse, client._rfbCredentials.username.length);
+                    push32(expectedResponse, client._rfbCredentials.password.length);
+                    pushString(expectedResponse, client._rfbCredentials.username);
+                    pushString(expectedResponse, client._rfbCredentials.password);
                     expect(client._sock).to.have.sent(new Uint8Array(expectedResponse));
+
+                    client._initMsg = sinon.spy();
+                    client._sock._websocket._receiveData(new Uint8Array([0, 0, 0, 0]));
+                    expect(client._initMsg).to.have.been.called;
                 });
             });
         });
 
         describe('Legacy SecurityResult', function () {
-            it('should not include reason in securityfailure event for versions < 3.7', function () {
-                client.addEventListener("credentialsrequired", () => {
-                    client.sendCredentials({ password: 'passwd' });
-                });
-                const spy = sinon.spy();
-                client.addEventListener("securityfailure", spy);
-                sendVer('003.006\n', client);
-                client._sock._websocket._receiveData(new Uint8Array([0, 0, 0, 2]));
-                const challenge = [];
-                for (let i = 0; i < 16; i++) { challenge[i] = i; }
-                client._sock._websocket._receiveData(new Uint8Array(challenge));
-
-                client._sock._websocket._receiveData(new Uint8Array([0, 0, 0, 2]));
-                expect(spy).to.have.been.calledOnce;
-                expect(spy.args[0][0].detail.status).to.equal(2);
-                expect('reason' in spy.args[0][0].detail).to.be.false;
+            beforeEach(function () {
+                sendVer('003.007\n', client);
+                client._sock._websocket._getSentData();
+                sendSecurity(1, client);
+                client._sock._websocket._getSentData();
             });
 
-            it('should not include reason in securityfailure event for versions < 3.8', function () {
-                client.addEventListener("credentialsrequired", () => {
-                    client.sendCredentials({ password: 'passwd' });
-                });
+            it('should not include reason in securityfailure event', function () {
                 const spy = sinon.spy();
                 client.addEventListener("securityfailure", spy);
-                sendVer('003.007\n', client);
-                sendSecurity(2, client);
-                const challenge = [];
-                for (let i = 0; i < 16; i++) { challenge[i] = i; }
-                client._sock._websocket._receiveData(new Uint8Array(challenge));
-
                 client._sock._websocket._receiveData(new Uint8Array([0, 0, 0, 2]));
                 expect(spy).to.have.been.calledOnce;
                 expect(spy.args[0][0].detail.status).to.equal(2);
@@ -2747,7 +1870,7 @@ describe('Remote Frame Buffer protocol client', function () {
                 expect(client._keyboard.grab).to.have.been.calledOnce;
             });
 
-            describe('Initial update request', function () {
+            describe('Initial Update Request', function () {
                 beforeEach(function () {
                     sinon.spy(RFB.messages, "pixelFormat");
                     sinon.spy(RFB.messages, "clientEncodings");
@@ -2802,7 +1925,7 @@ describe('Remote Frame Buffer protocol client', function () {
         });
     });
 
-    describe('Protocol message processing after completing initialization', function () {
+    describe('Protocol Message Processing After Completing Initialization', function () {
         let client;
 
         beforeEach(function () {
@@ -2812,33 +1935,49 @@ describe('Remote Frame Buffer protocol client', function () {
             client._fbHeight = 20;
         });
 
-        describe('Framebuffer update handling', function () {
+        describe('Framebuffer Update Handling', function () {
+            function sendFbuMsg(rectInfo, rectData, client, rectCnt) {
+                let data = [];
+
+                if (!rectCnt || rectCnt > -1) {
+                    // header
+                    data.push(0);  // msg type
+                    data.push(0);  // padding
+                    push16(data, rectCnt || rectData.length);
+                }
+
+                for (let i = 0; i < rectData.length; i++) {
+                    if (rectInfo[i]) {
+                        push16(data, rectInfo[i].x);
+                        push16(data, rectInfo[i].y);
+                        push16(data, rectInfo[i].width);
+                        push16(data, rectInfo[i].height);
+                        push32(data, rectInfo[i].encoding);
+                    }
+                    data = data.concat(rectData[i]);
+                }
+
+                client._sock._websocket._receiveData(new Uint8Array(data));
+            }
+
             it('should send an update request if there is sufficient data', function () {
-                let esock = new Websock();
-                let ews = new FakeWebSocket();
-                ews._open();
-                esock.attach(ews);
-                RFB.messages.fbUpdateRequest(esock, true, 0, 0, 640, 20);
-                let expected = ews._getSentData();
+                const expectedMsg = {_sQ: new Uint8Array(10), _sQlen: 0, flush: () => {}};
+                RFB.messages.fbUpdateRequest(expectedMsg, true, 0, 0, 640, 20);
 
                 client._framebufferUpdate = () => true;
                 client._sock._websocket._receiveData(new Uint8Array([0]));
 
-                expect(client._sock).to.have.sent(expected);
+                expect(client._sock).to.have.sent(expectedMsg._sQ);
             });
 
             it('should not send an update request if we need more data', function () {
                 client._sock._websocket._receiveData(new Uint8Array([0]));
-                expect(client._sock).to.have.sent(new Uint8Array([]));
+                expect(client._sock._websocket._getSentData()).to.have.length(0);
             });
 
             it('should resume receiving an update if we previously did not have enough data', function () {
-                let esock = new Websock();
-                let ews = new FakeWebSocket();
-                ews._open();
-                esock.attach(ews);
-                RFB.messages.fbUpdateRequest(esock, true, 0, 0, 640, 20);
-                let expected = ews._getSentData();
+                const expectedMsg = {_sQ: new Uint8Array(10), _sQlen: 0, flush: () => {}};
+                RFB.messages.fbUpdateRequest(expectedMsg, true, 0, 0, 640, 20);
 
                 // just enough to set FBU.rects
                 client._sock._websocket._receiveData(new Uint8Array([0, 0, 0, 3]));
@@ -2847,7 +1986,7 @@ describe('Remote Frame Buffer protocol client', function () {
                 client._framebufferUpdate = function () { this._sock.rQskipBytes(1); return true; };  // we magically have enough data
                 // 247 should *not* be used as the message type here
                 client._sock._websocket._receiveData(new Uint8Array([247]));
-                expect(client._sock).to.have.sent(expected);
+                expect(client._sock).to.have.sent(expectedMsg._sQ);
             });
 
             it('should not send a request in continuous updates mode', function () {
@@ -2855,21 +1994,17 @@ describe('Remote Frame Buffer protocol client', function () {
                 client._framebufferUpdate = () => true;
                 client._sock._websocket._receiveData(new Uint8Array([0]));
 
-                expect(client._sock).to.have.sent(new Uint8Array([]));
+                expect(client._sock._websocket._getSentData()).to.have.length(0);
             });
 
             it('should fail on an unsupported encoding', function () {
-                let callback = sinon.spy();
-                client.addEventListener("disconnect", callback);
-
+                sinon.spy(client, "_fail");
                 const rectInfo = { x: 8, y: 11, width: 27, height: 32, encoding: 234 };
                 sendFbuMsg([rectInfo], [[]], client);
-
-                expect(callback).to.have.been.calledOnce;
-                expect(callback.args[0][0].detail.clean).to.be.false;
+                expect(client._fail).to.have.been.calledOnce;
             });
 
-            describe('Message encoding handlers', function () {
+            describe('Message Encoding Handlers', function () {
                 beforeEach(function () {
                     // a really small frame
                     client._fbWidth = 4;
@@ -3110,7 +2245,7 @@ describe('Remote Frame Buffer protocol client', function () {
                     });
                 });
 
-                describe('the VMware cursor pseudo-encoding handler', function () {
+                describe('the VMware Cursor pseudo-encoding handler', function () {
                     beforeEach(function () {
                         sinon.spy(client._cursor, 'change');
                     });
@@ -3276,11 +2411,7 @@ describe('Remote Frame Buffer protocol client', function () {
 
                 it('should handle the last_rect pseudo-encoding', function () {
                     sendFbuMsg([{ x: 0, y: 0, width: 0, height: 0, encoding: -224}], [[]], client, 100);
-                    // Send a bell message and make sure it is parsed
-                    let spy = sinon.spy();
-                    client.addEventListener("bell", spy);
-                    client._sock._websocket._receiveData(new Uint8Array([0x02]));
-                    expect(spy).to.have.been.calledOnce;
+                    expect(client._FBU.rects).to.equal(0);
                 });
 
                 it('should handle the DesktopName pseudo-encoding', function () {
@@ -3297,154 +2428,10 @@ describe('Remote Frame Buffer protocol client', function () {
                     expect(spy).to.have.been.calledOnce;
                     expect(spy.args[0][0].detail.name).to.equal('som€ nam€');
                 });
-
-            });
-
-            describe('Caps Lock and Num Lock remote fixup', function () {
-                function sendLedStateUpdate(state) {
-                    let data = [];
-                    push8(data, state);
-                    sendFbuMsg([{ x: 0, y: 0, width: 0, height: 0, encoding: -261 }], [data], client);
-                }
-
-                let client;
-                beforeEach(function () {
-                    client = makeRFB();
-                    sinon.stub(client, 'sendKey');
-                });
-
-                it('should toggle caps lock if remote caps lock is on and local is off', function () {
-                    sendLedStateUpdate(0b100);
-                    client._handleKeyEvent(0x61, 'KeyA', true, null, false);
-
-                    expect(client.sendKey).to.have.been.calledThrice;
-                    expect(client.sendKey.firstCall).to.have.been.calledWith(0xFFE5, "CapsLock", true);
-                    expect(client.sendKey.secondCall).to.have.been.calledWith(0xFFE5, "CapsLock", false);
-                    expect(client.sendKey.thirdCall).to.have.been.calledWith(0x61, "KeyA", true);
-                });
-
-                it('should toggle caps lock if remote caps lock is off and local is on', function () {
-                    sendLedStateUpdate(0b011);
-                    client._handleKeyEvent(0x41, 'KeyA', true, null, true);
-
-                    expect(client.sendKey).to.have.been.calledThrice;
-                    expect(client.sendKey.firstCall).to.have.been.calledWith(0xFFE5, "CapsLock", true);
-                    expect(client.sendKey.secondCall).to.have.been.calledWith(0xFFE5, "CapsLock", false);
-                    expect(client.sendKey.thirdCall).to.have.been.calledWith(0x41, "KeyA", true);
-                });
-
-                it('should not toggle caps lock if remote caps lock is on and local is on', function () {
-                    sendLedStateUpdate(0b100);
-                    client._handleKeyEvent(0x41, 'KeyA', true, null, true);
-
-                    expect(client.sendKey).to.have.been.calledOnce;
-                    expect(client.sendKey.firstCall).to.have.been.calledWith(0x41, "KeyA", true);
-                });
-
-                it('should not toggle caps lock if remote caps lock is off and local is off', function () {
-                    sendLedStateUpdate(0b011);
-                    client._handleKeyEvent(0x61, 'KeyA', true, null, false);
-
-                    expect(client.sendKey).to.have.been.calledOnce;
-                    expect(client.sendKey.firstCall).to.have.been.calledWith(0x61, "KeyA", true);
-                });
-
-                it('should not toggle caps lock if the key is caps lock', function () {
-                    sendLedStateUpdate(0b011);
-                    client._handleKeyEvent(0xFFE5, 'CapsLock', true, null, true);
-
-                    expect(client.sendKey).to.have.been.calledOnce;
-                    expect(client.sendKey.firstCall).to.have.been.calledWith(0xFFE5, "CapsLock", true);
-                });
-
-                it('should toggle caps lock only once', function () {
-                    sendLedStateUpdate(0b100);
-                    client._handleKeyEvent(0x61, 'KeyA', true, null, false);
-                    client._handleKeyEvent(0x61, 'KeyA', true, null, false);
-
-                    expect(client.sendKey).to.have.callCount(4);
-                    expect(client.sendKey.firstCall).to.have.been.calledWith(0xFFE5, "CapsLock", true);
-                    expect(client.sendKey.secondCall).to.have.been.calledWith(0xFFE5, "CapsLock", false);
-                    expect(client.sendKey.thirdCall).to.have.been.calledWith(0x61, "KeyA", true);
-                    expect(client.sendKey.lastCall).to.have.been.calledWith(0x61, "KeyA", true);
-                });
-
-                it('should retain remote caps lock state on capslock key up', function () {
-                    sendLedStateUpdate(0b100);
-                    client._handleKeyEvent(0xFFE5, 'CapsLock', false, null, true);
-
-                    expect(client.sendKey).to.have.been.calledOnce;
-                    expect(client.sendKey.firstCall).to.have.been.calledWith(0xFFE5, "CapsLock", false);
-                    expect(client._remoteCapsLock).to.equal(true);
-                });
-
-                it('should toggle num lock if remote num lock is on and local is off', function () {
-                    sendLedStateUpdate(0b010);
-                    client._handleKeyEvent(0xFF9C, 'NumPad1', true, false, null);
-
-                    expect(client.sendKey).to.have.been.calledThrice;
-                    expect(client.sendKey.firstCall).to.have.been.calledWith(0xFF7F, "NumLock", true);
-                    expect(client.sendKey.secondCall).to.have.been.calledWith(0xFF7F, "NumLock", false);
-                    expect(client.sendKey.thirdCall).to.have.been.calledWith(0xFF9C, "NumPad1", true);
-                });
-
-                it('should toggle num lock if remote num lock is off and local is on', function () {
-                    sendLedStateUpdate(0b101);
-                    client._handleKeyEvent(0xFFB1, 'NumPad1', true, true, null);
-
-                    expect(client.sendKey).to.have.been.calledThrice;
-                    expect(client.sendKey.firstCall).to.have.been.calledWith(0xFF7F, "NumLock", true);
-                    expect(client.sendKey.secondCall).to.have.been.calledWith(0xFF7F, "NumLock", false);
-                    expect(client.sendKey.thirdCall).to.have.been.calledWith(0xFFB1, "NumPad1", true);
-                });
-
-                it('should not toggle num lock if remote num lock is on and local is on', function () {
-                    sendLedStateUpdate(0b010);
-                    client._handleKeyEvent(0xFFB1, 'NumPad1', true,  true, null);
-
-                    expect(client.sendKey).to.have.been.calledOnce;
-                    expect(client.sendKey.firstCall).to.have.been.calledWith(0xFFB1, "NumPad1", true);
-                });
-
-                it('should not toggle num lock if remote num lock is off and local is off', function () {
-                    sendLedStateUpdate(0b101);
-                    client._handleKeyEvent(0xFF9C, 'NumPad1', true, false, null);
-
-                    expect(client.sendKey).to.have.been.calledOnce;
-                    expect(client.sendKey.firstCall).to.have.been.calledWith(0xFF9C, "NumPad1", true);
-                });
-
-                it('should not toggle num lock if the key is num lock', function () {
-                    sendLedStateUpdate(0b101);
-                    client._handleKeyEvent(0xFF7F, 'NumLock', true, true, null);
-
-                    expect(client.sendKey).to.have.been.calledOnce;
-                    expect(client.sendKey.firstCall).to.have.been.calledWith(0xFF7F, "NumLock", true);
-                });
-
-                it('should not toggle num lock if local state is unknown', function () {
-                    sendLedStateUpdate(0b010);
-                    client._handleKeyEvent(0xFFB1, 'NumPad1', true, null, null);
-
-                    expect(client.sendKey).to.have.been.calledOnce;
-                    expect(client.sendKey.firstCall).to.have.been.calledWith(0xFFB1, "NumPad1", true);
-                });
-
-                it('should toggle num lock only once', function () {
-                    sendLedStateUpdate(0b010);
-                    client._handleKeyEvent(0xFF9C, 'NumPad1', true, false, null);
-                    client._handleKeyEvent(0xFF9C, 'NumPad1', true, false, null);
-
-                    expect(client.sendKey).to.have.callCount(4);
-                    expect(client.sendKey.firstCall).to.have.been.calledWith(0xFF7F, "NumLock", true);
-                    expect(client.sendKey.secondCall).to.have.been.calledWith(0xFF7F, "NumLock", false);
-                    expect(client.sendKey.thirdCall).to.have.been.calledWith(0xFF9C, "NumPad1", true);
-                    expect(client.sendKey.lastCall).to.have.been.calledWith(0xFF9C, "NumPad1", true);
-                });
             });
         });
 
-        describe('XVP message handling', function () {
+        describe('XVP Message Handling', function () {
             it('should set the XVP version and fire the callback with the version on XVP_INIT', function () {
                 const spy = sinon.spy();
                 client.addEventListener("capabilities", spy);
@@ -3456,17 +2443,13 @@ describe('Remote Frame Buffer protocol client', function () {
             });
 
             it('should fail on unknown XVP message types', function () {
-                let callback = sinon.spy();
-                client.addEventListener("disconnect", callback);
-
+                sinon.spy(client, "_fail");
                 client._sock._websocket._receiveData(new Uint8Array([250, 0, 10, 237]));
-
-                expect(callback).to.have.been.calledOnce;
-                expect(callback.args[0][0].detail.clean).to.be.false;
+                expect(client._fail).to.have.been.calledOnce;
             });
         });
 
-        describe('Normal clipboard handling receive', function () {
+        describe('Normal Clipboard Handling Receive', function () {
             it('should fire the clipboard callback with the retrieved text on ServerCutText', function () {
                 const expectedStr = 'cheese!';
                 const data = [3, 0, 0, 0];
@@ -3481,7 +2464,7 @@ describe('Remote Frame Buffer protocol client', function () {
             });
         });
 
-        describe('Extended clipboard handling', function () {
+        describe('Extended clipboard Handling', function () {
 
             describe('Extended clipboard initialization', function () {
                 beforeEach(function () {
@@ -3516,7 +2499,7 @@ describe('Remote Frame Buffer protocol client', function () {
 
             });
 
-            describe('Extended clipboard handling receive', function () {
+            describe('Extended Clipboard Handling Receive', function () {
 
                 beforeEach(function () {
                     // Send our capabilities
@@ -3536,14 +2519,17 @@ describe('Remote Frame Buffer protocol client', function () {
                         let data = [3, 0, 0, 0];
                         const flags = [0x10, 0x00, 0x00, 0x01];
 
-                        let text = encodeUTF8("Aå漢字!");
-                        let deflatedText = deflateWithSize(text);
+                        /* The size 10 (utf8 encoded string size) and the
+                        string "Aå漢字!" utf8 encoded and deflated. */
+                        let deflatedData = [120, 94, 99, 96, 96, 224, 114, 60,
+                                            188, 244, 217, 158, 69, 79, 215,
+                                            78, 87, 4, 0, 35, 207, 6, 66];
 
                         // How much data we are sending.
-                        push32(data, toUnsigned32bit(-(4 + deflatedText.length)));
+                        push32(data, toUnsigned32bit(-(4 + deflatedData.length)));
 
                         data = data.concat(flags);
-                        data = data.concat(Array.from(deflatedText));
+                        data = data.concat(deflatedData);
 
                         const spy = sinon.spy();
                         client.addEventListener("clipboard", spy);
@@ -3555,11 +2541,11 @@ describe('Remote Frame Buffer protocol client', function () {
                     });
 
                     it('should update clipboard with correct escape characters from a Provide message ', function () {
-                        let expectedData = "Oh\nmy\n!";
+                        let expectedData = "Oh\nmy!";
                         let data = [3, 0, 0, 0];
                         const flags = [0x10, 0x00, 0x00, 0x01];
 
-                        let text = encodeUTF8("Oh\r\nmy\r\n!\0");
+                        let text = encodeUTF8("Oh\r\nmy!\0");
 
                         let deflatedText = deflateWithSize(text);
 
@@ -3567,12 +2553,15 @@ describe('Remote Frame Buffer protocol client', function () {
                         push32(data, toUnsigned32bit(-(4 + deflatedText.length)));
 
                         data = data.concat(flags);
-                        data = data.concat(Array.from(deflatedText));
+
+                        let sendData = new Uint8Array(data.length + deflatedText.length);
+                        sendData.set(data);
+                        sendData.set(deflatedText, data.length);
 
                         const spy = sinon.spy();
                         client.addEventListener("clipboard", spy);
 
-                        client._sock._websocket._receiveData(new Uint8Array(data));
+                        client._sock._websocket._receiveData(sendData);
                         expect(spy).to.have.been.calledOnce;
                         expect(spy.args[0][0].detail.text).to.equal(expectedData);
                         client.removeEventListener("clipboard", spy);
@@ -3591,12 +2580,15 @@ describe('Remote Frame Buffer protocol client', function () {
                         push32(data, toUnsigned32bit(-(4 + deflatedText.length)));
 
                         data = data.concat(flags);
-                        data = data.concat(Array.from(deflatedText));
+
+                        let sendData = new Uint8Array(data.length + deflatedText.length);
+                        sendData.set(data);
+                        sendData.set(deflatedText, data.length);
 
                         const spy = sinon.spy();
                         client.addEventListener("clipboard", spy);
 
-                        client._sock._websocket._receiveData(new Uint8Array(data));
+                        client._sock._websocket._receiveData(sendData);
                         expect(spy).to.have.been.calledOnce;
                         expect(spy.args[0][0].detail.text).to.equal(expectedData);
                         client.removeEventListener("clipboard", spy);
@@ -3705,47 +2697,41 @@ describe('Remote Frame Buffer protocol client', function () {
         });
 
         it('should respond correctly to ServerFence', function () {
+            const expectedMsg = {_sQ: new Uint8Array(16), _sQlen: 0, flush: () => {}};
+            const incomingMsg = {_sQ: new Uint8Array(16), _sQlen: 0, flush: () => {}};
+
             const payload = "foo\x00ab9";
 
-            let esock = new Websock();
-            let ews = new FakeWebSocket();
-            ews._open();
-            esock.attach(ews);
-
             // ClientFence and ServerFence are identical in structure
-            RFB.messages.clientFence(esock, (1<<0) | (1<<1), payload);
-            let expected = ews._getSentData();
-            RFB.messages.clientFence(esock, 0xffffffff, payload);
-            let incoming = ews._getSentData();
+            RFB.messages.clientFence(expectedMsg, (1<<0) | (1<<1), payload);
+            RFB.messages.clientFence(incomingMsg, 0xffffffff, payload);
 
-            client._sock._websocket._receiveData(incoming);
+            client._sock._websocket._receiveData(incomingMsg._sQ);
 
-            expect(client._sock).to.have.sent(expected);
+            expect(client._sock).to.have.sent(expectedMsg._sQ);
 
-            RFB.messages.clientFence(esock, (1<<0), payload);
-            expected = ews._getSentData();
-            RFB.messages.clientFence(esock, (1<<0) | (1<<31), payload);
-            incoming = ews._getSentData();
+            expectedMsg._sQlen = 0;
+            incomingMsg._sQlen = 0;
 
-            client._sock._websocket._receiveData(incoming);
+            RFB.messages.clientFence(expectedMsg, (1<<0), payload);
+            RFB.messages.clientFence(incomingMsg, (1<<0) | (1<<31), payload);
 
-            expect(client._sock).to.have.sent(expected);
+            client._sock._websocket._receiveData(incomingMsg._sQ);
+
+            expect(client._sock).to.have.sent(expectedMsg._sQ);
         });
 
         it('should enable continuous updates on first EndOfContinousUpdates', function () {
-            let esock = new Websock();
-            let ews = new FakeWebSocket();
-            ews._open();
-            esock.attach(ews);
-            RFB.messages.enableContinuousUpdates(esock, true, 0, 0, 640, 20);
-            let expected = ews._getSentData();
+            const expectedMsg = {_sQ: new Uint8Array(10), _sQlen: 0, flush: () => {}};
+
+            RFB.messages.enableContinuousUpdates(expectedMsg, true, 0, 0, 640, 20);
 
             expect(client._enabledContinuousUpdates).to.be.false;
 
             client._sock._websocket._receiveData(new Uint8Array([150]));
 
             expect(client._enabledContinuousUpdates).to.be.true;
-            expect(client._sock).to.have.sent(expected);
+            expect(client._sock).to.have.sent(expectedMsg._sQ);
         });
 
         it('should disable continuous updates on subsequent EndOfContinousUpdates', function () {
@@ -3758,39 +2744,30 @@ describe('Remote Frame Buffer protocol client', function () {
         });
 
         it('should update continuous updates on resize', function () {
-            let esock = new Websock();
-            let ews = new FakeWebSocket();
-            ews._open();
-            esock.attach(ews);
-            RFB.messages.enableContinuousUpdates(esock, true, 0, 0, 90, 700);
-            let expected = ews._getSentData();
+            const expectedMsg = {_sQ: new Uint8Array(10), _sQlen: 0, flush: () => {}};
+            RFB.messages.enableContinuousUpdates(expectedMsg, true, 0, 0, 90, 700);
 
             client._resize(450, 160);
 
-            expect(client._sock).to.have.sent(new Uint8Array([]));
+            expect(client._sock._websocket._getSentData()).to.have.length(0);
 
             client._enabledContinuousUpdates = true;
 
             client._resize(90, 700);
 
-            expect(client._sock).to.have.sent(expected);
+            expect(client._sock).to.have.sent(expectedMsg._sQ);
         });
 
         it('should fail on an unknown message type', function () {
-            let callback = sinon.spy();
-            client.addEventListener("disconnect", callback);
-
+            sinon.spy(client, "_fail");
             client._sock._websocket._receiveData(new Uint8Array([87]));
-
-            expect(callback).to.have.been.calledOnce;
-            expect(callback.args[0][0].detail.clean).to.be.false;
+            expect(client._fail).to.have.been.calledOnce;
         });
     });
 
-    describe('Asynchronous events', function () {
+    describe('Asynchronous Events', function () {
         let client;
         let pointerEvent;
-        let extendedPointerEvent;
         let keyEvent;
         let qemuKeyEvent;
 
@@ -3804,78 +2781,117 @@ describe('Remote Frame Buffer protocol client', function () {
             client.focusOnClick = false;
 
             pointerEvent = sinon.spy(RFB.messages, 'pointerEvent');
-            extendedPointerEvent = sinon.spy(RFB.messages, 'extendedPointerEvent');
             keyEvent = sinon.spy(RFB.messages, 'keyEvent');
             qemuKeyEvent = sinon.spy(RFB.messages, 'QEMUExtendedKeyEvent');
         });
 
         afterEach(function () {
             pointerEvent.restore();
-            extendedPointerEvent.restore();
             keyEvent.restore();
             qemuKeyEvent.restore();
         });
 
-        describe('Mouse events', function () {
+        function elementToClient(x, y) {
+            let res = { x: 0, y: 0 };
+
+            let bounds = client._canvas.getBoundingClientRect();
+
+            /*
+             * If the canvas is on a fractional position we will calculate
+             * a fractional mouse position. But that gets truncated when we
+             * send the event, AND the same thing happens in RFB when it
+             * generates the PointerEvent message. To compensate for that
+             * fact we round the value upwards here.
+             */
+            res.x = Math.ceil(bounds.left + x);
+            res.y = Math.ceil(bounds.top + y);
+
+            return res;
+        }
+
+        describe('Mouse Events', function () {
+            function sendMouseMoveEvent(x, y) {
+                let pos = elementToClient(x, y);
+                let ev;
+
+                ev = new MouseEvent('mousemove',
+                                    { 'screenX': pos.x + window.screenX,
+                                      'screenY': pos.y + window.screenY,
+                                      'clientX': pos.x,
+                                      'clientY': pos.y });
+                client._canvas.dispatchEvent(ev);
+            }
+
+            function sendMouseButtonEvent(x, y, down, button) {
+                let pos = elementToClient(x, y);
+                let ev;
+
+                ev = new MouseEvent(down ? 'mousedown' : 'mouseup',
+                                    { 'screenX': pos.x + window.screenX,
+                                      'screenY': pos.y + window.screenY,
+                                      'clientX': pos.x,
+                                      'clientY': pos.y,
+                                      'button': button,
+                                      'buttons': 1 << button });
+                client._canvas.dispatchEvent(ev);
+            }
 
             it('should not send button messages in view-only mode', function () {
                 client._viewOnly = true;
-                sendMouseButtonEvent(10, 10, true, 0x1, client);
-
+                sendMouseButtonEvent(10, 10, true, 0);
                 clock.tick(50);
                 expect(pointerEvent).to.not.have.been.called;
             });
 
             it('should not send movement messages in view-only mode', function () {
                 client._viewOnly = true;
-                sendMouseMoveEvent(10, 10, 0x0, client);
-
+                sendMouseMoveEvent(10, 10);
                 clock.tick(50);
                 expect(pointerEvent).to.not.have.been.called;
             });
 
             it('should handle left mouse button', function () {
-                sendMouseButtonEvent(10, 10, true, 0x1, client);
+                sendMouseButtonEvent(10, 10, true, 0);
 
                 expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                  10, 10, 0x1);
                 pointerEvent.resetHistory();
 
-                sendMouseButtonEvent(10, 10, false, 0x0, client);
+                sendMouseButtonEvent(10, 10, false, 0);
 
                 expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                  10, 10, 0x0);
             });
 
             it('should handle middle mouse button', function () {
-                sendMouseButtonEvent(10, 10, true, 0x4, client);
+                sendMouseButtonEvent(10, 10, true, 1);
 
                 expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                  10, 10, 0x2);
                 pointerEvent.resetHistory();
 
-                sendMouseButtonEvent(10, 10, false, 0x0, client);
+                sendMouseButtonEvent(10, 10, false, 1);
 
                 expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                  10, 10, 0x0);
             });
 
             it('should handle right mouse button', function () {
-                sendMouseButtonEvent(10, 10, true, 0x2, client);
+                sendMouseButtonEvent(10, 10, true, 2);
 
                 expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                  10, 10, 0x4);
                 pointerEvent.resetHistory();
 
-                sendMouseButtonEvent(10, 10, false, 0x0, client);
+                sendMouseButtonEvent(10, 10, false, 2);
 
                 expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                  10, 10, 0x0);
             });
 
             it('should handle multiple mouse buttons', function () {
-                sendMouseButtonEvent(10, 10, true, 0x1, client);
-                sendMouseButtonEvent(10, 10, true, 0x3, client);
+                sendMouseButtonEvent(10, 10, true, 0);
+                sendMouseButtonEvent(10, 10, true, 2);
 
                 expect(pointerEvent).to.have.been.calledTwice;
                 expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -3885,9 +2901,8 @@ describe('Remote Frame Buffer protocol client', function () {
 
                 pointerEvent.resetHistory();
 
-
-                sendMouseButtonEvent(10, 10, false, 0x2, client);
-                sendMouseButtonEvent(10, 10, false, 0x0, client);
+                sendMouseButtonEvent(10, 10, false, 0);
+                sendMouseButtonEvent(10, 10, false, 2);
 
                 expect(pointerEvent).to.have.been.calledTwice;
                 expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -3897,14 +2912,14 @@ describe('Remote Frame Buffer protocol client', function () {
             });
 
             it('should handle mouse movement', function () {
-                sendMouseMoveEvent(50, 70, 0x0, client);
+                sendMouseMoveEvent(50, 70);
                 expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                  50, 70, 0x0);
             });
 
             it('should handle click and drag', function () {
-                sendMouseButtonEvent(10, 10, true, 0x1, client);
-                sendMouseMoveEvent(50, 70, 0x1, client);
+                sendMouseButtonEvent(10, 10, true, 0);
+                sendMouseMoveEvent(50, 70);
 
                 expect(pointerEvent).to.have.been.calledTwice;
                 expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -3914,40 +2929,23 @@ describe('Remote Frame Buffer protocol client', function () {
 
                 pointerEvent.resetHistory();
 
-                sendMouseButtonEvent(50, 70, false, 0x0, client);
+                sendMouseButtonEvent(50, 70, false, 0);
 
                 expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                  50, 70, 0x0);
             });
 
-            it('should send extended pointer event when server supports extended pointer events', function () {
-                // Enable extended pointer events
-                sendFbuMsg([{ x: 0, y: 0, width: 0, height: 0, encoding: -316 }], [[]], client);
-
-                sendMouseButtonEvent(50, 70, true, 0x10, client);
-
-                expect(extendedPointerEvent).to.have.been.calledOnceWith(client._sock,
-                                                                         50, 70, 0x100);
-            });
-
-            it('should send normal pointer event when server does not support extended pointer events', function () {
-                sendMouseButtonEvent(50, 70, true, 0x10, client);
-
-                expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
-                                                                 50, 70, 0x100);
-            });
-
-            describe('Event aggregation', function () {
+            describe('Event Aggregation', function () {
                 it('should send a single pointer event on mouse movement', function () {
-                    sendMouseMoveEvent(50, 70, 0x0, client);
+                    sendMouseMoveEvent(50, 70);
                     clock.tick(100);
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                      50, 70, 0x0);
                 });
 
                 it('should delay one move if two events are too close', function () {
-                    sendMouseMoveEvent(18, 30, 0x0, client);
-                    sendMouseMoveEvent(20, 50, 0x0, client);
+                    sendMouseMoveEvent(18, 30);
+                    sendMouseMoveEvent(20, 50);
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                      18, 30, 0x0);
@@ -3960,9 +2958,9 @@ describe('Remote Frame Buffer protocol client', function () {
                 });
 
                 it('should only send first and last move of many close events', function () {
-                    sendMouseMoveEvent(18, 30, 0x0, client);
-                    sendMouseMoveEvent(20, 50, 0x0, client);
-                    sendMouseMoveEvent(21, 55, 0x0, client);
+                    sendMouseMoveEvent(18, 30);
+                    sendMouseMoveEvent(20, 50);
+                    sendMouseMoveEvent(21, 55);
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                      18, 30, 0x0);
@@ -3976,46 +2974,46 @@ describe('Remote Frame Buffer protocol client', function () {
 
                 // We selected the 17ms since that is ~60 FPS
                 it('should send move events every 17 ms', function () {
-                    sendMouseMoveEvent(1, 10, 0x0, client);  // instant send
+                    sendMouseMoveEvent(1, 10);  // instant send
                     clock.tick(10);
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                      1, 10, 0x0);
                     pointerEvent.resetHistory();
 
-                    sendMouseMoveEvent(2, 20, 0x0, client);  // delayed
+                    sendMouseMoveEvent(2, 20);  // delayed
                     clock.tick(10);        // timeout send
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                      2, 20, 0x0);
                     pointerEvent.resetHistory();
 
-                    sendMouseMoveEvent(3, 30, 0x0, client);  // delayed
+                    sendMouseMoveEvent(3, 30);  // delayed
                     clock.tick(10);
-                    sendMouseMoveEvent(4, 40, 0x0, client);  // delayed
+                    sendMouseMoveEvent(4, 40);  // delayed
                     clock.tick(10);        // timeout send
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                      4, 40, 0x0);
                     pointerEvent.resetHistory();
 
-                    sendMouseMoveEvent(5, 50, 0x0, client);  // delayed
+                    sendMouseMoveEvent(5, 50);  // delayed
 
                     expect(pointerEvent).to.not.have.been.called;
                 });
 
                 it('should send waiting move events before a button press', function () {
-                    sendMouseMoveEvent(13, 9, 0x0, client);
+                    sendMouseMoveEvent(13, 9);
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                      13, 9, 0x0);
                     pointerEvent.resetHistory();
 
-                    sendMouseMoveEvent(20, 70, 0x0, client);
+                    sendMouseMoveEvent(20, 70);
 
                     expect(pointerEvent).to.not.have.been.called;
 
-                    sendMouseButtonEvent(20, 70, true, 0x1, client);
+                    sendMouseButtonEvent(20, 70, true, 0);
 
                     expect(pointerEvent).to.have.been.calledTwice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4025,7 +3023,7 @@ describe('Remote Frame Buffer protocol client', function () {
                 });
 
                 it('should send move events with enough time apart normally', function () {
-                    sendMouseMoveEvent(58, 60, 0x0, client);
+                    sendMouseMoveEvent(58, 60);
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                      58, 60, 0x0);
@@ -4033,7 +3031,7 @@ describe('Remote Frame Buffer protocol client', function () {
 
                     clock.tick(20);
 
-                    sendMouseMoveEvent(25, 60, 0x0, client);
+                    sendMouseMoveEvent(25, 60);
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                      25, 60, 0x0);
@@ -4041,13 +3039,13 @@ describe('Remote Frame Buffer protocol client', function () {
                 });
 
                 it('should not send waiting move events if disconnected', function () {
-                    sendMouseMoveEvent(88, 99, 0x0, client);
+                    sendMouseMoveEvent(88, 99);
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                      88, 99, 0x0);
                     pointerEvent.resetHistory();
 
-                    sendMouseMoveEvent(66, 77, 0x0, client);
+                    sendMouseMoveEvent(66, 77);
                     client.disconnect();
                     clock.tick(20);
 
@@ -4064,9 +3062,9 @@ describe('Remote Frame Buffer protocol client', function () {
             });
         });
 
-        describe('Wheel events', function () {
-            function sendWheelEvent(x, y, dx, dy, mode=0, buttons=0) {
-                let pos = elementToClient(x, y, client);
+        describe('Wheel Events', function () {
+            function sendWheelEvent(x, y, dx, dy, mode=0) {
+                let pos = elementToClient(x, y);
                 let ev;
 
                 ev = new WheelEvent('wheel',
@@ -4076,8 +3074,7 @@ describe('Remote Frame Buffer protocol client', function () {
                                       'clientY': pos.y,
                                       'deltaX': dx,
                                       'deltaY': dy,
-                                      'deltaMode': mode,
-                                      'buttons': buttons });
+                                      'deltaMode': mode });
                 client._canvas.dispatchEvent(ev);
             }
 
@@ -4173,35 +3170,14 @@ describe('Remote Frame Buffer protocol client', function () {
                 expect(pointerEvent.secondCall).to.have.been.calledWith(client._sock,
                                                                         10, 10, 0);
             });
-
-            it('should handle wheel event with buttons pressed', function () {
-                sendMouseButtonEvent(10, 10, true, 0x1, client);
-                sendWheelEvent(10, 10, 0, 50, 0, 0x1);
-
-                expect(pointerEvent).to.have.been.called.calledThrice;
-
-                expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
-                                                                       10, 10, 0x1);
-                expect(pointerEvent.secondCall).to.have.been.calledWith(client._sock,
-                                                                        10, 10, 0x11);
-                expect(pointerEvent.thirdCall).to.have.been.calledWith(client._sock,
-                                                                       10, 10, 0x1);
-            });
-
         });
 
-        describe('Keyboard events', function () {
+        describe('Keyboard Events', function () {
             it('should send a key message on a key press', function () {
-                let esock = new Websock();
-                let ews = new FakeWebSocket();
-                ews._open();
-                esock.attach(ews);
-                RFB.messages.keyEvent(esock, 0x41, 1);
-                let expected = ews._getSentData();
-
                 client._handleKeyEvent(0x41, 'KeyA', true);
-
-                expect(client._sock).to.have.sent(expected);
+                const keyMsg = {_sQ: new Uint8Array(8), _sQlen: 0, flush: () => {}};
+                RFB.messages.keyEvent(keyMsg, 0x41, 1);
+                expect(client._sock).to.have.sent(keyMsg._sQ);
             });
 
             it('should not send messages in view-only mode', function () {
@@ -4213,12 +3189,43 @@ describe('Remote Frame Buffer protocol client', function () {
         });
 
         describe('Gesture event handlers', function () {
+            function gestureStart(gestureType, x, y,
+                                  magnitudeX = 0, magnitudeY = 0) {
+                let pos = elementToClient(x, y);
+                let detail = {type: gestureType, clientX: pos.x, clientY: pos.y};
+
+                detail.magnitudeX = magnitudeX;
+                detail.magnitudeY = magnitudeY;
+
+                let ev = new CustomEvent('gesturestart', { detail: detail });
+                client._canvas.dispatchEvent(ev);
+            }
+
+            function gestureMove(gestureType, x, y,
+                                 magnitudeX = 0, magnitudeY = 0) {
+                let pos = elementToClient(x, y);
+                let detail = {type: gestureType, clientX: pos.x, clientY: pos.y};
+
+                detail.magnitudeX = magnitudeX;
+                detail.magnitudeY = magnitudeY;
+
+                let ev = new CustomEvent('gesturemove', { detail: detail });
+                client._canvas.dispatchEvent(ev);
+            }
+
+            function gestureEnd(gestureType, x, y) {
+                let pos = elementToClient(x, y);
+                let detail = {type: gestureType, clientX: pos.x, clientY: pos.y};
+                let ev = new CustomEvent('gestureend', { detail: detail });
+                client._canvas.dispatchEvent(ev);
+            }
+
             describe('Gesture onetap', function () {
                 it('should handle onetap events', function () {
                     let bmask = 0x1;
 
-                    gestureStart('onetap', 20, 40, client);
-                    gestureEnd('onetap', 20, 40, client);
+                    gestureStart('onetap', 20, 40);
+                    gestureEnd('onetap', 20, 40);
 
                     expect(pointerEvent).to.have.been.calledThrice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4232,8 +3239,8 @@ describe('Remote Frame Buffer protocol client', function () {
                 it('should keep same position for multiple onetap events', function () {
                     let bmask = 0x1;
 
-                    gestureStart('onetap', 20, 40, client);
-                    gestureEnd('onetap', 20, 40, client);
+                    gestureStart('onetap', 20, 40);
+                    gestureEnd('onetap', 20, 40);
 
                     expect(pointerEvent).to.have.been.calledThrice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4245,8 +3252,8 @@ describe('Remote Frame Buffer protocol client', function () {
 
                     pointerEvent.resetHistory();
 
-                    gestureStart('onetap', 20, 50, client);
-                    gestureEnd('onetap', 20, 50, client);
+                    gestureStart('onetap', 20, 50);
+                    gestureEnd('onetap', 20, 50);
 
                     expect(pointerEvent).to.have.been.calledThrice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4258,8 +3265,8 @@ describe('Remote Frame Buffer protocol client', function () {
 
                     pointerEvent.resetHistory();
 
-                    gestureStart('onetap', 30, 50, client);
-                    gestureEnd('onetap', 30, 50, client);
+                    gestureStart('onetap', 30, 50);
+                    gestureEnd('onetap', 30, 50);
 
                     expect(pointerEvent).to.have.been.calledThrice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4273,8 +3280,8 @@ describe('Remote Frame Buffer protocol client', function () {
                 it('should not keep same position for onetap events when too far apart', function () {
                     let bmask = 0x1;
 
-                    gestureStart('onetap', 20, 40, client);
-                    gestureEnd('onetap', 20, 40, client);
+                    gestureStart('onetap', 20, 40);
+                    gestureEnd('onetap', 20, 40);
 
                     expect(pointerEvent).to.have.been.calledThrice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4286,8 +3293,8 @@ describe('Remote Frame Buffer protocol client', function () {
 
                     pointerEvent.resetHistory();
 
-                    gestureStart('onetap', 80, 95, client);
-                    gestureEnd('onetap', 80, 95, client);
+                    gestureStart('onetap', 80, 95);
+                    gestureEnd('onetap', 80, 95);
 
                     expect(pointerEvent).to.have.been.calledThrice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4301,8 +3308,8 @@ describe('Remote Frame Buffer protocol client', function () {
                 it('should not keep same position for onetap events when enough time inbetween', function () {
                     let bmask = 0x1;
 
-                    gestureStart('onetap', 10, 20, client);
-                    gestureEnd('onetap', 10, 20, client);
+                    gestureStart('onetap', 10, 20);
+                    gestureEnd('onetap', 10, 20);
 
                     expect(pointerEvent).to.have.been.calledThrice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4315,8 +3322,8 @@ describe('Remote Frame Buffer protocol client', function () {
                     pointerEvent.resetHistory();
                     this.clock.tick(1500);
 
-                    gestureStart('onetap', 15, 20, client);
-                    gestureEnd('onetap', 15, 20, client);
+                    gestureStart('onetap', 15, 20);
+                    gestureEnd('onetap', 15, 20);
 
                     expect(pointerEvent).to.have.been.calledThrice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4334,7 +3341,7 @@ describe('Remote Frame Buffer protocol client', function () {
                 it('should handle gesture twotap events', function () {
                     let bmask = 0x4;
 
-                    gestureStart("twotap", 20, 40, client);
+                    gestureStart("twotap", 20, 40);
 
                     expect(pointerEvent).to.have.been.calledThrice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4351,8 +3358,8 @@ describe('Remote Frame Buffer protocol client', function () {
                     for (let offset = 0;offset < 30;offset += 10) {
                         pointerEvent.resetHistory();
 
-                        gestureStart('twotap', 20, 40 + offset, client);
-                        gestureEnd('twotap', 20, 40 + offset, client);
+                        gestureStart('twotap', 20, 40 + offset);
+                        gestureEnd('twotap', 20, 40 + offset);
 
                         expect(pointerEvent).to.have.been.calledThrice;
                         expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4369,7 +3376,7 @@ describe('Remote Frame Buffer protocol client', function () {
                 it('should handle gesture start for threetap events', function () {
                     let bmask = 0x2;
 
-                    gestureStart("threetap", 20, 40, client);
+                    gestureStart("threetap", 20, 40);
 
                     expect(pointerEvent).to.have.been.calledThrice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4386,8 +3393,8 @@ describe('Remote Frame Buffer protocol client', function () {
                     for (let offset = 0;offset < 30;offset += 10) {
                         pointerEvent.resetHistory();
 
-                        gestureStart('threetap', 20, 40 + offset, client);
-                        gestureEnd('threetap', 20, 40 + offset, client);
+                        gestureStart('threetap', 20, 40 + offset);
+                        gestureEnd('threetap', 20, 40 + offset);
 
                         expect(pointerEvent).to.have.been.calledThrice;
                         expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4404,7 +3411,7 @@ describe('Remote Frame Buffer protocol client', function () {
                 it('should handle gesture drag events', function () {
                     let bmask = 0x1;
 
-                    gestureStart('drag', 20, 40, client);
+                    gestureStart('drag', 20, 40);
 
                     expect(pointerEvent).to.have.been.calledTwice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4414,7 +3421,7 @@ describe('Remote Frame Buffer protocol client', function () {
 
                     pointerEvent.resetHistory();
 
-                    gestureMove('drag', 30, 50, client);
+                    gestureMove('drag', 30, 50);
                     clock.tick(50);
 
                     expect(pointerEvent).to.have.been.calledOnce;
@@ -4423,7 +3430,7 @@ describe('Remote Frame Buffer protocol client', function () {
 
                     pointerEvent.resetHistory();
 
-                    gestureEnd('drag', 30, 50, client);
+                    gestureEnd('drag', 30, 50);
 
                     expect(pointerEvent).to.have.been.calledTwice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4437,7 +3444,7 @@ describe('Remote Frame Buffer protocol client', function () {
                 it('should handle long press events', function () {
                     let bmask = 0x4;
 
-                    gestureStart('longpress', 20, 40, client);
+                    gestureStart('longpress', 20, 40);
 
                     expect(pointerEvent).to.have.been.calledTwice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4446,7 +3453,7 @@ describe('Remote Frame Buffer protocol client', function () {
                                                                             20, 40, bmask);
                     pointerEvent.resetHistory();
 
-                    gestureMove('longpress', 40, 60, client);
+                    gestureMove('longpress', 40, 60);
                     clock.tick(50);
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
@@ -4454,7 +3461,7 @@ describe('Remote Frame Buffer protocol client', function () {
 
                     pointerEvent.resetHistory();
 
-                    gestureEnd('longpress', 40, 60, client);
+                    gestureEnd('longpress', 40, 60);
 
                     expect(pointerEvent).to.have.been.calledTwice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4468,14 +3475,14 @@ describe('Remote Frame Buffer protocol client', function () {
                 it('should handle gesture twodrag up events', function () {
                     let bmask = 0x10; // Button mask for scroll down
 
-                    gestureStart('twodrag', 20, 40, client, 0, 0);
+                    gestureStart('twodrag', 20, 40, 0, 0);
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                      20, 40, 0x0);
 
                     pointerEvent.resetHistory();
 
-                    gestureMove('twodrag', 20, 40, client, 0, -60);
+                    gestureMove('twodrag', 20, 40, 0, -60);
 
                     expect(pointerEvent).to.have.been.calledThrice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4489,14 +3496,14 @@ describe('Remote Frame Buffer protocol client', function () {
                 it('should handle gesture twodrag down events', function () {
                     let bmask = 0x8; // Button mask for scroll up
 
-                    gestureStart('twodrag', 20, 40, client, 0, 0);
+                    gestureStart('twodrag', 20, 40, 0, 0);
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                      20, 40, 0x0);
 
                     pointerEvent.resetHistory();
 
-                    gestureMove('twodrag', 20, 40, client, 0, 60);
+                    gestureMove('twodrag', 20, 40, 0, 60);
 
                     expect(pointerEvent).to.have.been.calledThrice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4510,14 +3517,14 @@ describe('Remote Frame Buffer protocol client', function () {
                 it('should handle gesture twodrag right events', function () {
                     let bmask = 0x20; // Button mask for scroll right
 
-                    gestureStart('twodrag', 20, 40, client, 0, 0);
+                    gestureStart('twodrag', 20, 40, 0, 0);
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                      20, 40, 0x0);
 
                     pointerEvent.resetHistory();
 
-                    gestureMove('twodrag', 20, 40, client, 60, 0);
+                    gestureMove('twodrag', 20, 40, 60, 0);
 
                     expect(pointerEvent).to.have.been.calledThrice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4531,14 +3538,14 @@ describe('Remote Frame Buffer protocol client', function () {
                 it('should handle gesture twodrag left events', function () {
                     let bmask = 0x40; // Button mask for scroll left
 
-                    gestureStart('twodrag', 20, 40, client, 0, 0);
+                    gestureStart('twodrag', 20, 40, 0, 0);
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                      20, 40, 0x0);
 
                     pointerEvent.resetHistory();
 
-                    gestureMove('twodrag', 20, 40, client, -60, 0);
+                    gestureMove('twodrag', 20, 40, -60, 0);
 
                     expect(pointerEvent).to.have.been.calledThrice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4553,14 +3560,14 @@ describe('Remote Frame Buffer protocol client', function () {
                     let scrlUp = 0x8; // Button mask for scroll up
                     let scrlRight = 0x20; // Button mask for scroll right
 
-                    gestureStart('twodrag', 20, 40, client, 0, 0);
+                    gestureStart('twodrag', 20, 40, 0, 0);
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                      20, 40, 0x0);
 
                     pointerEvent.resetHistory();
 
-                    gestureMove('twodrag', 20, 40, client, 60, 60);
+                    gestureMove('twodrag', 20, 40, 60, 60);
 
                     expect(pointerEvent).to.have.been.callCount(5);
                     expect(pointerEvent.getCall(0)).to.have.been.calledWith(client._sock,
@@ -4578,14 +3585,14 @@ describe('Remote Frame Buffer protocol client', function () {
                 it('should handle multiple small gesture twodrag events', function () {
                     let bmask = 0x8; // Button mask for scroll up
 
-                    gestureStart('twodrag', 20, 40, client, 0, 0);
+                    gestureStart('twodrag', 20, 40, 0, 0);
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                      20, 40, 0x0);
 
                     pointerEvent.resetHistory();
 
-                    gestureMove('twodrag', 20, 40, client, 0, 10);
+                    gestureMove('twodrag', 20, 40, 0, 10);
                     clock.tick(50);
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
@@ -4593,7 +3600,7 @@ describe('Remote Frame Buffer protocol client', function () {
 
                     pointerEvent.resetHistory();
 
-                    gestureMove('twodrag', 20, 40, client, 0, 20);
+                    gestureMove('twodrag', 20, 40, 0, 20);
                     clock.tick(50);
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
@@ -4601,7 +3608,7 @@ describe('Remote Frame Buffer protocol client', function () {
 
                     pointerEvent.resetHistory();
 
-                    gestureMove('twodrag', 20, 40, client, 0, 60);
+                    gestureMove('twodrag', 20, 40, 0, 60);
 
                     expect(pointerEvent).to.have.been.calledThrice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4615,14 +3622,14 @@ describe('Remote Frame Buffer protocol client', function () {
                 it('should handle large gesture twodrag events', function () {
                     let bmask = 0x8; // Button mask for scroll up
 
-                    gestureStart('twodrag', 30, 50, client, 0, 0);
+                    gestureStart('twodrag', 30, 50, 0, 0);
 
                     expect(pointerEvent).
                         to.have.been.calledOnceWith(client._sock, 30, 50, 0x0);
 
                     pointerEvent.resetHistory();
 
-                    gestureMove('twodrag', 30, 50, client, 0, 200);
+                    gestureMove('twodrag', 30, 50, 0, 200);
 
                     expect(pointerEvent).to.have.callCount(7);
                     expect(pointerEvent.getCall(0)).to.have.been.calledWith(client._sock,
@@ -4647,7 +3654,7 @@ describe('Remote Frame Buffer protocol client', function () {
                     let keysym = KeyTable.XK_Control_L;
                     let bmask = 0x10; // Button mask for scroll down
 
-                    gestureStart('pinch', 20, 40, client, 90, 90);
+                    gestureStart('pinch', 20, 40, 90, 90);
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                      20, 40, 0x0);
@@ -4655,7 +3662,7 @@ describe('Remote Frame Buffer protocol client', function () {
 
                     pointerEvent.resetHistory();
 
-                    gestureMove('pinch', 20, 40, client, 30, 30);
+                    gestureMove('pinch', 20, 40, 30, 30);
 
                     expect(pointerEvent).to.have.been.calledThrice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4677,7 +3684,7 @@ describe('Remote Frame Buffer protocol client', function () {
                     pointerEvent.resetHistory();
                     keyEvent.resetHistory();
 
-                    gestureEnd('pinch', 20, 40, client);
+                    gestureEnd('pinch', 20, 40);
 
                     expect(pointerEvent).to.not.have.been.called;
                     expect(keyEvent).to.not.have.been.called;
@@ -4687,7 +3694,7 @@ describe('Remote Frame Buffer protocol client', function () {
                     let keysym = KeyTable.XK_Control_L;
                     let bmask = 0x8; // Button mask for scroll up
 
-                    gestureStart('pinch', 10, 20, client, 10, 20);
+                    gestureStart('pinch', 10, 20, 10, 20);
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                      10, 20, 0x0);
@@ -4695,7 +3702,7 @@ describe('Remote Frame Buffer protocol client', function () {
 
                     pointerEvent.resetHistory();
 
-                    gestureMove('pinch', 10, 20, client, 70, 80);
+                    gestureMove('pinch', 10, 20, 70, 80);
 
                     expect(pointerEvent).to.have.been.calledThrice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4717,7 +3724,7 @@ describe('Remote Frame Buffer protocol client', function () {
                     pointerEvent.resetHistory();
                     keyEvent.resetHistory();
 
-                    gestureEnd('pinch', 10, 20, client);
+                    gestureEnd('pinch', 10, 20);
 
                     expect(pointerEvent).to.not.have.been.called;
                     expect(keyEvent).to.not.have.been.called;
@@ -4727,7 +3734,7 @@ describe('Remote Frame Buffer protocol client', function () {
                     let keysym = KeyTable.XK_Control_L;
                     let bmask = 0x10; // Button mask for scroll down
 
-                    gestureStart('pinch', 20, 40, client, 150, 150);
+                    gestureStart('pinch', 20, 40, 150, 150);
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                      20, 40, 0x0);
@@ -4735,7 +3742,7 @@ describe('Remote Frame Buffer protocol client', function () {
 
                     pointerEvent.resetHistory();
 
-                    gestureMove('pinch', 20, 40, client, 30, 30);
+                    gestureMove('pinch', 20, 40, 30, 30);
 
                     expect(pointerEvent).to.have.been.callCount(5);
                     expect(pointerEvent.getCall(0)).to.have.been.calledWith(client._sock,
@@ -4761,7 +3768,7 @@ describe('Remote Frame Buffer protocol client', function () {
                     pointerEvent.resetHistory();
                     keyEvent.resetHistory();
 
-                    gestureEnd('pinch', 20, 40, client);
+                    gestureEnd('pinch', 20, 40);
 
                     expect(pointerEvent).to.not.have.been.called;
                     expect(keyEvent).to.not.have.been.called;
@@ -4771,7 +3778,7 @@ describe('Remote Frame Buffer protocol client', function () {
                     let keysym = KeyTable.XK_Control_L;
                     let bmask = 0x8; // Button mask for scroll down
 
-                    gestureStart('pinch', 20, 40, client, 0, 10);
+                    gestureStart('pinch', 20, 40, 0, 10);
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                      20, 40, 0x0);
@@ -4779,7 +3786,7 @@ describe('Remote Frame Buffer protocol client', function () {
 
                     pointerEvent.resetHistory();
 
-                    gestureMove('pinch', 20, 40, client, 0, 30);
+                    gestureMove('pinch', 20, 40, 0, 30);
                     clock.tick(50);
 
                     expect(pointerEvent).to.have.been.calledWith(client._sock,
@@ -4787,7 +3794,7 @@ describe('Remote Frame Buffer protocol client', function () {
 
                     pointerEvent.resetHistory();
 
-                    gestureMove('pinch', 20, 40, client, 0, 60);
+                    gestureMove('pinch', 20, 40, 0, 60);
                     clock.tick(50);
 
                     expect(pointerEvent).to.have.been.calledWith(client._sock,
@@ -4796,7 +3803,7 @@ describe('Remote Frame Buffer protocol client', function () {
                     pointerEvent.resetHistory();
                     keyEvent.resetHistory();
 
-                    gestureMove('pinch', 20, 40, client, 0, 90);
+                    gestureMove('pinch', 20, 40, 0, 90);
 
                     expect(pointerEvent).to.have.been.calledThrice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4818,7 +3825,7 @@ describe('Remote Frame Buffer protocol client', function () {
                     pointerEvent.resetHistory();
                     keyEvent.resetHistory();
 
-                    gestureEnd('pinch', 20, 40, client);
+                    gestureEnd('pinch', 20, 40);
 
                     expect(keyEvent).to.not.have.been.called;
                 });
@@ -4830,7 +3837,7 @@ describe('Remote Frame Buffer protocol client', function () {
 
                     client._qemuExtKeyEventSupported = true;
 
-                    gestureStart('pinch', 20, 40, client, 90, 90);
+                    gestureStart('pinch', 20, 40, 90, 90);
 
                     expect(pointerEvent).to.have.been.calledOnceWith(client._sock,
                                                                      20, 40, 0x0);
@@ -4838,7 +3845,7 @@ describe('Remote Frame Buffer protocol client', function () {
 
                     pointerEvent.resetHistory();
 
-                    gestureMove('pinch', 20, 40, client, 30, 30);
+                    gestureMove('pinch', 20, 40, 30, 30);
 
                     expect(pointerEvent).to.have.been.calledThrice;
                     expect(pointerEvent.firstCall).to.have.been.calledWith(client._sock,
@@ -4864,7 +3871,7 @@ describe('Remote Frame Buffer protocol client', function () {
                     pointerEvent.resetHistory();
                     qemuKeyEvent.resetHistory();
 
-                    gestureEnd('pinch', 20, 40, client);
+                    gestureEnd('pinch', 20, 40);
 
                     expect(pointerEvent).to.not.have.been.called;
                     expect(qemuKeyEvent).to.not.have.been.called;
@@ -4872,16 +3879,16 @@ describe('Remote Frame Buffer protocol client', function () {
             });
         });
 
-        describe('WebSocket events', function () {
+        describe('WebSocket Events', function () {
             // message events
             it('should do nothing if we receive an empty message and have nothing in the queue', function () {
-                sinon.spy(client, "_normalMsg");
+                client._normalMsg = sinon.spy();
                 client._sock._websocket._receiveData(new Uint8Array([]));
                 expect(client._normalMsg).to.not.have.been.called;
             });
 
             it('should handle a message in the connected state as a normal message', function () {
-                sinon.spy(client, "_normalMsg");
+                client._normalMsg = sinon.spy();
                 client._sock._websocket._receiveData(new Uint8Array([1, 2, 3]));
                 expect(client._normalMsg).to.have.been.called;
             });
@@ -4889,7 +3896,7 @@ describe('Remote Frame Buffer protocol client', function () {
             it('should handle a message in any non-disconnected/failed state like an init message', function () {
                 client._rfbConnectionState = 'connecting';
                 client._rfbInitState = 'ProtocolVersion';
-                sinon.spy(client, "_initMsg");
+                client._initMsg = sinon.spy();
                 client._sock._websocket._receiveData(new Uint8Array([1, 2, 3]));
                 expect(client._initMsg).to.have.been.called;
             });
@@ -5153,92 +4160,31 @@ describe('Remote Frame Buffer protocol client', function () {
 describe('RFB messages', function () {
     let sock;
 
-    beforeEach(function () {
-        let websock = new FakeWebSocket();
-        websock._open();
+    before(function () {
+        FakeWebSocket.replace();
         sock = new Websock();
-        sock.attach(websock);
+        sock.open();
     });
 
-    describe('Input events', function () {
-        it('should send correct data for keyboard events', function () {
-            // FIXME: down should be boolean
-            RFB.messages.keyEvent(sock, 0x12345678, 0);
-            let expected =
-                [ 4, 0, 0, 0, 0x12, 0x34, 0x56, 0x78];
-            expect(sock).to.have.sent(new Uint8Array(expected));
-
-            RFB.messages.keyEvent(sock, 0x90abcdef, 1);
-            expected =
-                [ 4, 1, 0, 0, 0x90, 0xab, 0xcd, 0xef];
-            expect(sock).to.have.sent(new Uint8Array(expected));
-        });
-
-        it('should send correct data for QEMU keyboard events', function () {
-            // FIXME: down should be boolean
-            RFB.messages.QEMUExtendedKeyEvent(sock, 0x12345678, 0, 0x55);
-            let expected =
-                [ 255, 0, 0, 0, 0x12, 0x34, 0x56, 0x78, 0x00, 0x00, 0x00, 0x55];
-            expect(sock).to.have.sent(new Uint8Array(expected));
-
-            RFB.messages.QEMUExtendedKeyEvent(sock, 0x90abcdef, 1, 0xe055);
-            expected =
-                [ 255, 0, 0, 1, 0x90, 0xab, 0xcd, 0xef, 0x00, 0x00, 0x00, 0xd5];
-            expect(sock).to.have.sent(new Uint8Array(expected));
-        });
-
-        it('should send correct data for pointer events', function () {
-            RFB.messages.pointerEvent(sock, 12345, 54321, 0x2b);
-            let expected =
-                [ 5, 0x2b, 0x30, 0x39, 0xd4, 0x31];
-            expect(sock).to.have.sent(new Uint8Array(expected));
-        });
-
-        it('should send correct data for pointer events with marker bit set', function () {
-            RFB.messages.pointerEvent(sock, 12345, 54321, 0xab);
-            let expected =
-                [ 5, 0x2b, 0x30, 0x39, 0xd4, 0x31];
-            expect(sock).to.have.sent(new Uint8Array(expected));
-        });
-
-        it('should send correct data for pointer events with extended button bits set', function () {
-            RFB.messages.pointerEvent(sock, 12345, 54321, 0x3ab);
-            let expected =
-                [ 5, 0x2b, 0x30, 0x39, 0xd4, 0x31];
-            expect(sock).to.have.sent(new Uint8Array(expected));
-        });
-
-        it('should send correct data for extended pointer events', function () {
-            RFB.messages.extendedPointerEvent(sock, 12345, 54321, 0xab);
-            let expected =
-                [ 5, 0xab, 0x30, 0x39, 0xd4, 0x31, 0x1];
-            expect(sock).to.have.sent(new Uint8Array(expected));
-        });
-
-        it('should not send invalid data for extended pointer events', function () {
-            expect(() => RFB.messages.extendedPointerEvent(sock, 12345, 54321, 0x3ab)).to.throw(Error);
-        });
+    after(function () {
+        FakeWebSocket.restore();
     });
 
-    describe('Clipboard events', function () {
-        it('should send correct data for clipboard events', function () {
-            RFB.messages.clientCutText(sock, new Uint8Array([ 0x01, 0x23, 0x45, 0x67 ]));
-            let expected =
-                [ 6, 0, 0, 0, 0x00, 0x00, 0x00, 0x04,
-                  0x01, 0x23, 0x45, 0x67 ];
-            expect(sock).to.have.sent(new Uint8Array(expected));
+    describe('Extended Clipboard Handling Send', function () {
+        beforeEach(function () {
+            sinon.spy(RFB.messages, 'clientCutText');
         });
-    });
 
-    describe('Extended clipboard handling send', function () {
+        afterEach(function () {
+            RFB.messages.clientCutText.restore();
+        });
+
         it('should call clientCutText with correct Caps data', function () {
             let formats = {
                 0: 2,
                 2: 4121
             };
-            let expectedData = new Uint8Array([0x06, 0x00, 0x00, 0x00,
-                                               0xFF, 0xFF, 0xFF, 0xF4,
-                                               0x1F, 0x00, 0x00, 0x05,
+            let expectedData = new Uint8Array([0x1F, 0x00, 0x00, 0x05,
                                                0x00, 0x00, 0x00, 0x02,
                                                0x00, 0x00, 0x10, 0x19]);
             let actions = [
@@ -5250,30 +4196,26 @@ describe('RFB messages', function () {
             ];
 
             RFB.messages.extendedClipboardCaps(sock, actions, formats);
-
-            expect(sock).to.have.sent(expectedData);
+            expect(RFB.messages.clientCutText).to.have.been.calledOnce;
+            expect(RFB.messages.clientCutText).to.have.been.calledWith(sock, expectedData);
         });
 
         it('should call clientCutText with correct Request data', function () {
             let formats = new Uint8Array([0x01]);
-            let expectedData = new Uint8Array([0x06, 0x00, 0x00, 0x00,
-                                               0xFF, 0xFF, 0xFF, 0xFC,
-                                               0x02, 0x00, 0x00, 0x01]);
+            let expectedData = new Uint8Array([0x02, 0x00, 0x00, 0x01]);
 
             RFB.messages.extendedClipboardRequest(sock, formats);
-
-            expect(sock).to.have.sent(expectedData);
+            expect(RFB.messages.clientCutText).to.have.been.calledOnce;
+            expect(RFB.messages.clientCutText).to.have.been.calledWith(sock, expectedData);
         });
 
         it('should call clientCutText with correct Notify data', function () {
             let formats = new Uint8Array([0x01]);
-            let expectedData = new Uint8Array([0x06, 0x00, 0x00, 0x00,
-                                               0xFF, 0xFF, 0xFF, 0xFC,
-                                               0x08, 0x00, 0x00, 0x01]);
+            let expectedData = new Uint8Array([0x08, 0x00, 0x00, 0x01]);
 
             RFB.messages.extendedClipboardNotify(sock, formats);
-
-            expect(sock).to.have.sent(expectedData);
+            expect(RFB.messages.clientCutText).to.have.been.calledOnce;
+            expect(RFB.messages.clientCutText).to.have.been.calledWith(sock, expectedData);
         });
 
         it('should call clientCutText with correct Provide data', function () {
@@ -5283,24 +4225,16 @@ describe('RFB messages', function () {
             let deflatedData =  deflateWithSize(expectedText);
 
             // Build Expected with flags and deflated data
-            let expectedData = new Uint8Array(8 + 4 + deflatedData.length);
-            expectedData[0] = 0x06; // Message type
-            expectedData[1] = 0x00;
-            expectedData[2] = 0x00;
-            expectedData[3] = 0x00;
-            expectedData[4] = 0xFF; // Size
-            expectedData[5] = 0xFF;
-            expectedData[6] = 0xFF;
-            expectedData[7] = 256 - (4 + deflatedData.length);
-            expectedData[8] = 0x10; // The client capabilities
-            expectedData[9] = 0x00; // Reserved flags
-            expectedData[10] = 0x00; // Reserved flags
-            expectedData[11] = 0x01; // The formats client supports
-            expectedData.set(deflatedData, 12);
+            let expectedData = new Uint8Array(4 + deflatedData.length);
+            expectedData[0] = 0x10; // The client capabilities
+            expectedData[1] = 0x00; // Reserved flags
+            expectedData[2] = 0x00; // Reserved flags
+            expectedData[3] = 0x01; // The formats client supports
+            expectedData.set(deflatedData, 4);
 
             RFB.messages.extendedClipboardProvide(sock, [0x01], [testText]);
-
-            expect(sock).to.have.sent(expectedData);
+            expect(RFB.messages.clientCutText).to.have.been.calledOnce;
+            expect(RFB.messages.clientCutText).to.have.been.calledWith(sock, expectedData, true);
 
         });
 
@@ -5313,24 +4247,16 @@ describe('RFB messages', function () {
                 let deflatedData =  deflateWithSize(expectedText);
 
                 // Build Expected with flags and deflated data
-                let expectedData = new Uint8Array(8 + 4 + deflatedData.length);
-                expectedData[0] = 0x06; // Message type
-                expectedData[1] = 0x00;
-                expectedData[2] = 0x00;
-                expectedData[3] = 0x00;
-                expectedData[4] = 0xFF; // Size
-                expectedData[5] = 0xFF;
-                expectedData[6] = 0xFF;
-                expectedData[7] = 256 - (4 + deflatedData.length);
-                expectedData[8] = 0x10; // The client capabilities
-                expectedData[9] = 0x00; // Reserved flags
-                expectedData[10] = 0x00; // Reserved flags
-                expectedData[11] = 0x01; // The formats client supports
-                expectedData.set(deflatedData, 12);
+                let expectedData = new Uint8Array(4 + deflatedData.length);
+                expectedData[0] = 0x10; // The client capabilities
+                expectedData[1] = 0x00; // Reserved flags
+                expectedData[2] = 0x00; // Reserved flags
+                expectedData[3] = 0x01; // The formats client supports
+                expectedData.set(deflatedData, 4);
 
                 RFB.messages.extendedClipboardProvide(sock, [0x01], [testText]);
-
-                expect(sock).to.have.sent(expectedData);
+                expect(RFB.messages.clientCutText).to.have.been.calledOnce;
+                expect(RFB.messages.clientCutText).to.have.been.calledWith(sock, expectedData, true);
             });
 
             it('Carriage return Line feed', function () {
@@ -5341,24 +4267,16 @@ describe('RFB messages', function () {
                 let deflatedData =  deflateWithSize(expectedText);
 
                 // Build Expected with flags and deflated data
-                let expectedData = new Uint8Array(8 + 4 + deflatedData.length);
-                expectedData[0] = 0x06; // Message type
-                expectedData[1] = 0x00;
-                expectedData[2] = 0x00;
-                expectedData[3] = 0x00;
-                expectedData[4] = 0xFF; // Size
-                expectedData[5] = 0xFF;
-                expectedData[6] = 0xFF;
-                expectedData[7] = 256 - (4 + deflatedData.length);
-                expectedData[8] = 0x10; // The client capabilities
-                expectedData[9] = 0x00; // Reserved flags
-                expectedData[10] = 0x00; // Reserved flags
-                expectedData[11] = 0x01; // The formats client supports
-                expectedData.set(deflatedData, 12);
+                let expectedData = new Uint8Array(4 + deflatedData.length);
+                expectedData[0] = 0x10; // The client capabilities
+                expectedData[1] = 0x00; // Reserved flags
+                expectedData[2] = 0x00; // Reserved flags
+                expectedData[3] = 0x01; // The formats client supports
+                expectedData.set(deflatedData, 4);
 
                 RFB.messages.extendedClipboardProvide(sock, [0x01], [testText]);
-
-                expect(sock).to.have.sent(expectedData);
+                expect(RFB.messages.clientCutText).to.have.been.calledOnce;
+                expect(RFB.messages.clientCutText).to.have.been.calledWith(sock, expectedData, true);
             });
 
             it('Line feed', function () {
@@ -5368,24 +4286,16 @@ describe('RFB messages', function () {
                 let deflatedData =  deflateWithSize(expectedText);
 
                 // Build Expected with flags and deflated data
-                let expectedData = new Uint8Array(8 + 4 + deflatedData.length);
-                expectedData[0] = 0x06; // Message type
-                expectedData[1] = 0x00;
-                expectedData[2] = 0x00;
-                expectedData[3] = 0x00;
-                expectedData[4] = 0xFF; // Size
-                expectedData[5] = 0xFF;
-                expectedData[6] = 0xFF;
-                expectedData[7] = 256 - (4 + deflatedData.length);
-                expectedData[8] = 0x10; // The client capabilities
-                expectedData[9] = 0x00; // Reserved flags
-                expectedData[10] = 0x00; // Reserved flags
-                expectedData[11] = 0x01; // The formats client supports
-                expectedData.set(deflatedData, 12);
+                let expectedData = new Uint8Array(4 + deflatedData.length);
+                expectedData[0] = 0x10; // The client capabilities
+                expectedData[1] = 0x00; // Reserved flags
+                expectedData[2] = 0x00; // Reserved flags
+                expectedData[3] = 0x01; // The formats client supports
+                expectedData.set(deflatedData, 4);
 
                 RFB.messages.extendedClipboardProvide(sock, [0x01], [testText]);
-
-                expect(sock).to.have.sent(expectedData);
+                expect(RFB.messages.clientCutText).to.have.been.calledOnce;
+                expect(RFB.messages.clientCutText).to.have.been.calledWith(sock, expectedData, true);
             });
 
             it('Carriage return and Line feed mixed', function () {
@@ -5395,105 +4305,17 @@ describe('RFB messages', function () {
                 let deflatedData =  deflateWithSize(expectedText);
 
                 // Build Expected with flags and deflated data
-                let expectedData = new Uint8Array(8 + 4 + deflatedData.length);
-                expectedData[0] = 0x06; // Message type
-                expectedData[1] = 0x00;
-                expectedData[2] = 0x00;
-                expectedData[3] = 0x00;
-                expectedData[4] = 0xFF; // Size
-                expectedData[5] = 0xFF;
-                expectedData[6] = 0xFF;
-                expectedData[7] = 256 - (4 + deflatedData.length);
-                expectedData[8] = 0x10; // The client capabilities
-                expectedData[9] = 0x00; // Reserved flags
-                expectedData[10] = 0x00; // Reserved flags
-                expectedData[11] = 0x01; // The formats client supports
-                expectedData.set(deflatedData, 12);
+                let expectedData = new Uint8Array(4 + deflatedData.length);
+                expectedData[0] = 0x10; // The client capabilities
+                expectedData[1] = 0x00; // Reserved flags
+                expectedData[2] = 0x00; // Reserved flags
+                expectedData[3] = 0x01; // The formats client supports
+                expectedData.set(deflatedData, 4);
 
                 RFB.messages.extendedClipboardProvide(sock, [0x01], [testText]);
-
-                expect(sock).to.have.sent(expectedData);
+                expect(RFB.messages.clientCutText).to.have.been.calledOnce;
+                expect(RFB.messages.clientCutText).to.have.been.calledWith(sock, expectedData, true);
             });
-        });
-    });
-
-    describe('Screen layout', function () {
-        it('should send correct data for screen layout changes', function () {
-            RFB.messages.setDesktopSize(sock, 12345, 54321, 0x12345678, 0x90abcdef);
-            let expected =
-                [ 251, 0, 0x30, 0x39, 0xd4, 0x31, 0x01, 0x00,
-                  0x12, 0x34, 0x56, 0x78, 0x00, 0x00, 0x00, 0x00,
-                  0x30, 0x39, 0xd4, 0x31, 0x90, 0xab, 0xcd, 0xef ];
-            expect(sock).to.have.sent(new Uint8Array(expected));
-        });
-    });
-
-    describe('Fences', function () {
-        it('should send correct data for fences', function () {
-            // FIXME: Payload should be a byte array
-            RFB.messages.clientFence(sock, 0x12345678, "text");
-            let expected =
-                [ 248, 0, 0, 0, 0x12, 0x34, 0x56, 0x78,
-                  4, 0x74, 0x65, 0x78, 0x74 ];
-            expect(sock).to.have.sent(new Uint8Array(expected));
-        });
-    });
-
-    describe('Continuous updates', function () {
-        it('should send correct data for continuous updates configuration', function () {
-            // FIXME: enable should be boolean
-            RFB.messages.enableContinuousUpdates(sock, 0, 12345, 54321, 34343, 18181);
-            let expected =
-                [ 150, 0, 0x30, 0x39, 0xd4, 0x31, 0x86, 0x27, 0x47, 0x05 ];
-            expect(sock).to.have.sent(new Uint8Array(expected));
-        });
-    });
-
-    describe('Pixel format', function () {
-        it('should send correct data for normal depth', function () {
-            RFB.messages.pixelFormat(sock, 24, true);
-            let expected =
-                [ 0, 0, 0, 0, 32, 24, 0, 1,
-                  0, 255, 0, 255, 0, 255, 0, 8, 16, 0, 0, 0 ];
-            expect(sock).to.have.sent(new Uint8Array(expected));
-        });
-
-        it('should send correct data for low depth', function () {
-            RFB.messages.pixelFormat(sock, 8, true);
-            let expected =
-                [ 0, 0, 0, 0, 8, 8, 0, 1,
-                  0, 3, 0, 3, 0, 3, 0, 2, 4, 0, 0, 0 ];
-            expect(sock).to.have.sent(new Uint8Array(expected));
-        });
-    });
-
-    describe('Encodings', function () {
-        it('should send correct data for supported encodings', function () {
-            RFB.messages.clientEncodings(sock, [ 0x12345678,
-                                                 0x90abcdef,
-                                                 0x10293847 ]);
-            let expected =
-                [ 2, 0, 0, 3, 0x12, 0x34, 0x56, 0x78, 0x90, 0xab, 0xcd,
-                  0xef, 0x10, 0x29, 0x38, 0x47 ];
-            expect(sock).to.have.sent(new Uint8Array(expected));
-        });
-    });
-
-    describe('Update request', function () {
-        it('should send correct data for update request', function () {
-            RFB.messages.fbUpdateRequest(sock, true, 12345, 54321, 34343, 18181);
-            let expected =
-                [ 3, 1, 0x30, 0x39, 0xd4, 0x31, 0x86, 0x27, 0x47, 0x05 ];
-            expect(sock).to.have.sent(new Uint8Array(expected));
-        });
-    });
-
-    describe('XVP operations', function () {
-        it('should send correct data for XVP operations', function () {
-            RFB.messages.xvpOp(sock, 123, 45);
-            let expected =
-                [ 250, 0, 123, 45 ];
-            expect(sock).to.have.sent(new Uint8Array(expected));
         });
     });
 });
