@@ -40,7 +40,7 @@
                 </li>
                 <li class="<?= (strpos(uri_string(), 'laporan') !== false) ? 'active' : '' ?>">
                     <a href="<?php echo base_url('laporan') ?>">
-                        <i class="fa fa-server"></i>
+                        <i class="fa fa-clipboard-list"></i>
                         <span>Laporan Pembelajaran</span>
                     </a>
                 </li>
@@ -48,7 +48,7 @@
             <div class="sidebar-footer">
                 <ul>
                     <li>
-                        <a href="#" onclick="confirmLogout()">
+                        <a href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">
                             <i class="fa fa-sign-out-alt"></i>
                             <span>Logout</span>
                         </a>
@@ -87,6 +87,42 @@
                     </div>
                 </div>
             </footer>
+        </div>
+    </div>
+
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="logoutModalLabel">Konfirmasi Logout</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Apakah Anda yakin ingin logout?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary" onclick="window.location.href='<?php echo base_url('logout') ?>'">Logout</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deletUserModal" tabindex="-1" aria-labelledby="deletUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deletUserModalLabel">Konfirmasi Hapus</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Menghapus User Mahasiswa Akan Menghilangkan Seluruh datanya, Apakah Anda Yakin?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmDelete()">Hapus</button>
+                </div>
+            </div>
         </div>
     </div>
 

@@ -4,21 +4,25 @@ namespace App\Controllers;
 
 use App\Models\masterUser;
 use App\Models\masterMateri;
+use App\Models\masterVM;
 
 class AdminBeranda extends BaseController
 {
-    protected $masterUser;    
+    protected $masterUser;
     protected $masterMateri;
+    protected $masterVM;
     public function __construct()
     {
         $this->masterUser = new masterUser();
         $this->masterMateri = new masterMateri();
+        $this->masterVM = new masterVM();
     }
     public function index()
     {
         $data = [
             'users' => $this->masterUser->where('role', 'mahasiswa')->findAll(),
-            'materi' => $this->masterMateri->findAll()
+            'materi' => $this->masterMateri->findAll(),
+            'activeVMs' => $this->masterVM->getActiveVMsWithUserInfo()
         ];
         return view('v-adminBeranda', $data);
     }

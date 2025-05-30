@@ -10,19 +10,15 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     const toastTrigger = document.querySelectorAll('[data-toast]');
-    const toastEl = document.getElementById('liveToast');
-    const toastMessage = document.getElementById('toastMessage');
-    const toastAction = document.getElementById('toastAction');
-    const toastBackdrop = document.getElementById('toastBackdrop');
-    const toast = new bootstrap.Toast(toastEl, { autohide: false });
+    const actionModal = new bootstrap.Modal(document.getElementById('actionModal'));
+    const modalMessage = document.getElementById('modalMessage');
+    const modalAction = document.getElementById('modalAction');
 
-    function showBlockingToast(message, actionText, actionHref) {
-        toastMessage.textContent = message;
-        toastAction.textContent = actionText;
-        toastAction.href = actionHref;
-        toastBackdrop.classList.remove('d-none'); // Tampilkan overlay
-        document.body.style.overflow = 'hidden'; // Nonaktifkan scroll
-        toast.show();
+    function showActionModal(message, actionText, actionHref) {
+        modalMessage.textContent = message;
+        modalAction.textContent = actionText;
+        modalAction.href = actionHref;
+        actionModal.show();
     }
 
     toastTrigger.forEach(el => {
@@ -30,7 +26,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const type = el.getAttribute('data-toast');
             if (type === 'login-dulu') {
                 e.preventDefault();
-                showBlockingToast(
+                showActionModal(
                     'Silakan login terlebih dahulu untuk mengakses fitur ini.',
                     'Login',
                     baseUrl + 'login'
@@ -38,7 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
             } else if (type === 'lengkapi-data') {
                 e.preventDefault();
                 const url = new URL(el.getAttribute('href'), window.location.origin);
-                showBlockingToast(
+                showActionModal(
                     'Lengkapi data diri Anda sebelum melanjutkan.',
                     'Lengkapi Data',
                     url.href
@@ -46,17 +42,4 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
-
-    toastEl.addEventListener('hidden.bs.toast', function () {
-        toastBackdrop.classList.add('d-none');
-        document.body.style.overflow = 'auto';
-    });
-
-    window.confirmLogout = function () {
-        if (confirm('Apakah Anda yakin ingin logout?')) {
-            window.location.href = 'frondend/logout';
-        }
-    }
-
-    
 });

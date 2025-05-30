@@ -46,18 +46,5 @@ document.addEventListener("DOMContentLoaded", function() {
             });
         });
     });
-
-    // Konfirmasi logout
-    window.confirmLogout = function () {
-        if (confirm('Apakah Anda yakin ingin logout?')) {
-            window.location.href = '/logout';
-        }
-    };
-    
-    window.confirmDelete = function (idUser) {
-        if (confirm('Menghapus User Mahasiswa Akan Menghilangkan Seluruh datanya, Apakah Anda Yakin?')) {
-            window.location.href = '/datamahasiswa/delete/' + idUser;
-        }
-    };
     
 });
