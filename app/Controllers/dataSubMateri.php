@@ -101,7 +101,20 @@ class DataSubMateri extends BaseController
         return redirect()->to('datasubmateri/' . $idMateri)->with('success', 'Materi berhasil diperbarui.');
     }
 
-
+    public function detail($idSubMateri)
+    {
+        $subMateri = $this->subMateri->getSubMateriById($idSubMateri);
+        if (!$subMateri) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound('Sub Materi tidak ditemukan');
+        }
+        $materi = $this->materi->where('idMateri', $subMateri['idMateri'])->first();
+        $data = [
+            'subMateri' => $subMateri,
+            'materi' => $materi
+        ];
+        return view('subMateri/v-detailSubMateri', $data);
+    }
+    
     public function deleteSub($idSubMateri)
     {
         $subMateri = $this->subMateri->where('idSubMateri', $idSubMateri)->first();
