@@ -42,6 +42,7 @@ $routes->get('/datasubmateri/tambah/(:num)', 'dataSubMateri::tambahSub/$1');
 $routes->add('/datasubmateri/update/updateproses', 'dataSubMateri::updateSubProses');
 $routes->get('/datasubmateri/update/(:num)', 'dataSubMateri::updateSub/$1');
 $routes->get('/datasubmateri/(:num)', 'dataSubMateri::index/$1');
+$routes->get('/datasubmateri/detail/(:num)', 'dataSubMateri::detail/$1');
 $routes->get('/datasubmateri/delete/(:num)', 'dataSubMateri::deleteSub/$1');
 
 $routes->get('/laporan', 'laporanProgres::index');
