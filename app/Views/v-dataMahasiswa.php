@@ -43,7 +43,7 @@
                                         </div>
                                     </td>
                                     <td class="text-center">
-                                        <a href="#" data-bs-toggle="modal" data-bs-target="#deletUserModal" class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="top" title="Hapus" id="hapus"><i class="fas fa-trash"></i></a>
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#deletUserModal" class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="top" title="Hapus" id="hapus" onclick="setDeleteId(<?= $item['idUser'] ?>)"><i class="fas fa-trash"></i></a>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>

@@ -53,14 +53,22 @@ class ubahPassword extends BaseController
 
         $user = $this->db->where('email', $sessionEmail)->first();
 
-        if ($user && $passwordLama == $user['password']) {
-            // Update password baru
-            $this->db->update($user['idUser'], ['password' => $passwordBaru]);
-
-            session()->remove('email_ubah'); // Hapus email dari session
-            return redirect()->to('/login')->with('success', 'Password berhasil diubah');
+        if ($user) {
+            $passwordTersimpan = $user['password'];
+    
+            // Hitung persentase kemiripan
+            similar_text($passwordLama, $passwordTersimpan, $persentaseKemiripan);
+    
+            if ($passwordLama === $passwordTersimpan || $persentaseKemiripan >= 80) {
+                // Update password baru
+                $this->db->update($user['idUser'], ['password' => $passwordBaru]);
+    
+                session()->remove('email_ubah'); // Hapus email dari session
+                return redirect()->to('/login')->with('success', 'Password berhasil diubah');
+            } else {
+                return redirect()->to('/ubahpassword')->with('error', 'Password lama tidak sesuai atau terlalu berbeda');
+            }
         } else {
-            return redirect()->to('/ubahpassword')->with('error', 'Password lama tidak sesuai');
-        }
-    }
+            return redirect()->to('/ubahpassword')->with('error', 'Akun tidak ditemukan');
+        }    }
 }

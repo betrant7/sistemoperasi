@@ -101,6 +101,17 @@ class DataSubMateri extends BaseController
         return redirect()->to('datasubmateri/' . $idMateri)->with('success', 'Materi berhasil diperbarui.');
     }
 
+
+    public function deleteSub($idSubMateri)
+    {
+        $subMateri = $this->subMateri->where('idSubMateri', $idSubMateri)->first();
+        if ($subMateri) {
+            $idMateri = $subMateri['idMateri'];
+            $this->subMateri->delete($idSubMateri);
+            return redirect()->to(base_url('datasubmateri/' . $idMateri))->with('success', 'Materi berhasil dihapus.');
+        }
+    }
+
     public function detail($idSubMateri)
     {
         $subMateri = $this->subMateri->getSubMateriById($idSubMateri);
@@ -114,14 +125,5 @@ class DataSubMateri extends BaseController
         ];
         return view('subMateri/v-detailSubMateri', $data);
     }
-    
-    public function deleteSub($idSubMateri)
-    {
-        $subMateri = $this->subMateri->where('idSubMateri', $idSubMateri)->first();
-        if ($subMateri) {
-            $idMateri = $subMateri['idMateri'];
-            $this->subMateri->delete($idSubMateri);
-            return redirect()->to(base_url('datasubmateri/' . $idMateri))->with('success', 'Materi berhasil dihapus.');
-        }
-    }
 }
+
