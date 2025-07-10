@@ -1,0 +1,68 @@
+document.addEventListener("DOMContentLoaded", function() {
+    const sidebar = document.getElementById("sidebar");
+    const content = document.getElementById("content-wrapper");
+    const sidebarCollapseBtn = document.getElementById("sidebarCollapse");
+
+    sidebarCollapseBtn.addEventListener("click", function() {
+        sidebar.classList.toggle("collapsed");
+        content.classList.toggle("collapsed");
+    });
+
+    $(document).ready(function () {
+        // Inisialisasi DataTable
+        $('#example').DataTable();
+
+        // Event ketika materi dipilih
+        $('.materi-select').on('change', function () {
+            const idUser = $(this).data('user');
+            const idMateri = $(this).val();
+            const $progressBar = $('.progres-bar-' + idUser);
+            const $waktuMulai = $('.waktu-mulai-' + idUser);
+            const $waktuSelesai = $('.waktu-selesai-' + idUser);
+
+            fetch("/laporan/getprogres", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    idUser: idUser,
+                    idMateri: idMateri
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const progres = data.progres || 0;
+                $progressBar.css('width', progres + '%');
+                $progressBar.attr('aria-valuenow', progres);
+                $progressBar.text(progres + '%');
+
+                $waktuMulai.text(data.waktuMulai || '-');
+                $waktuSelesai.text(data.waktuSelesai || '-');
+            })
+            .catch(error => {
+                console.error('Gagal mengambil progres:', error);
+            });
+        });
+    });
+    
+    // Variable untuk menyimpan ID user yang akan dihapus
+    let deleteUserId = null;
+    
+    // Fungsi untuk menyimpan ID user yang akan dihapus
+    window.setDeleteId = function(idUser) {
+        deleteUserId = idUser;
+    };
+    
+    // Fungsi untuk konfirmasi delete
+    window.confirmDelete = function() {
+        if (deleteUserId) {
+            // Redirect ke URL delete dengan ID user
+            window.location.href = '/datamahasiswa/delete/' + deleteUserId;
+        } else {
+            alert('Terjadi kesalahan: ID user tidak ditemukan');
+        }
+    };
+    
+});
