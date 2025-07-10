@@ -43,7 +43,11 @@
                                         </div>
                                     </td>
                                     <td class="text-center">
+<<<<<<< HEAD
                                         <a href="#" data-bs-toggle="modal" data-bs-target="#deletUserModal" class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="top" title="Hapus" onclick="setDeleteId(<?= $item['idUser'] ?>)"><i class="fas fa-trash"></i></a>
+=======
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#deletUserModal" class="btn btn-sm btn-danger" data-toggle="tooltip" data-placement="top" title="Hapus" id="hapus"><i class="fas fa-trash"></i></a>
+>>>>>>> 5e287a0fccc78f4c044d859ee10e8bd339309165
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>

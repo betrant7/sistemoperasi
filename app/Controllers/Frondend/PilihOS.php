@@ -26,15 +26,27 @@ class PilihOS extends BaseController
                 $vmList = $vmListResponse['data'];
             }
 
+<<<<<<< HEAD
+=======
+            // Get user's VM data
+>>>>>>> 5e287a0fccc78f4c044d859ee10e8bd339309165
             $userId = session()->get('idUser');
             $vmData = $this->vmModel->getActiveVMsByUserId($userId);
 
             if ($vmData) {
+<<<<<<< HEAD
+=======
+                // Get detailed VM information from Proxmox
+>>>>>>> 5e287a0fccc78f4c044d859ee10e8bd339309165
                 $vmDetailsResponse = proxmox_get('nodes/server/qemu/' . $vmData['idVmProxmox'] . '/status/current', $auth);
                 if (isset($vmDetailsResponse['data'])) {
                     $vmDetails = $vmDetailsResponse['data'];
                 }
 
+<<<<<<< HEAD
+=======
+                // Get VNC ticket for console access
+>>>>>>> 5e287a0fccc78f4c044d859ee10e8bd339309165
                 $ticketResponse = proxmox_post('nodes/server/qemu/' . $vmData['idVmProxmox'] . '/vncproxy', [], $auth);
                 if (isset($ticketResponse['data'])) {
                     $ticket = $ticketResponse['data']['ticket'];
@@ -45,6 +57,10 @@ class PilihOS extends BaseController
             }
         }
 
+<<<<<<< HEAD
+=======
+        // Tambahkan logika noVNC jika VM aktif
+>>>>>>> 5e287a0fccc78f4c044d859ee10e8bd339309165
         $novnc_url = null;
         if (!empty($vmData) && $vmData['status'] == 'aktif') {
             $node = $vmData['node'] ?? 'server';
@@ -54,7 +70,13 @@ class PilihOS extends BaseController
                 if (isset($vnc['data']['ticket']) && isset($vnc['data']['port'])) {
                     $ticket = $vnc['data']['ticket'];
                     $vnc_port = $vnc['data']['port'];
+<<<<<<< HEAD
                     $ws_port = $this->findAvailablePort(6100, 6200);
+=======
+                    // Cari port websockify yang belum dipakai (misal: 6100-6200)
+                    $ws_port = $this->findAvailablePort(6100, 6200);
+                    // Jalankan websockify secara background (pastikan path dan user benar)
+>>>>>>> 5e287a0fccc78f4c044d859ee10e8bd339309165
                     $cmd = "nohup websockify --web /var/www/html/sistemoperasi/public/noVNC --cert=/etc/letsencrypt/live/ujicobavps.cloud/fullchain.pem --key=/etc/letsencrypt/live/ujicobavps.cloud/privkey.pem $ws_port 203.194.112.201:$vnc_port > /tmp/websockify_$ws_port.log 2>&1 &";
                     exec($cmd);
                     $novnc_url = base_url("noVNC/vnc.html?host=ujicobavps.cloud&port=$ws_port&autoconnect=1&password=$ticket");
@@ -74,11 +96,21 @@ class PilihOS extends BaseController
 
     public function createVM($os)
     {
+<<<<<<< HEAD
         $userId = session()->get('idUser');
         $vmData = $this->vmModel->getVMByUserIdAndJenisVM($userId, $os);
 
         $activeVM = $this->vmModel->getActiveVMsByUserId($userId);
         if ($activeVM && $activeVM['jenisVM'] != $os) {
+=======
+        $userId = session()->get('idUser'); // Ambil ID user dari session
+        $vmData = $this->vmModel->getVMByUserIdAndJenisVM($userId, $os);
+
+        // Cek apakah ada VM aktif lain milik user
+        $activeVM = $this->vmModel->getActiveVMsByUserId($userId);
+        if ($activeVM && $activeVM['jenisVM'] != $os) {
+            // Matikan VM yang sedang aktif
+>>>>>>> 5e287a0fccc78f4c044d859ee10e8bd339309165
             $auth = proxmox_login();
             $postData = [];
             $result = proxmox_post('nodes/server/qemu/' . $activeVM['idVmProxmox'] . '/status/stop', $postData, $auth);
@@ -87,23 +119,45 @@ class PilihOS extends BaseController
             }
         }
 
+<<<<<<< HEAD
         if ($vmData) {
             $auth = proxmox_login(); 
             $postData = [];
             $result = proxmox_post('nodes/server/qemu/' . $vmData['idVmProxmox'] . '/status/start', $postData, $auth);
 
             if ($result) {
+=======
+        // Jika user sudah memiliki VM dengan OS yang dipilih
+        if ($vmData) {
+            $auth = proxmox_login(); // Login ke Proxmox
+            $postData = []; // Data yang diperlukan untuk start VM
+            $result = proxmox_post('nodes/server/qemu/' . $vmData['idVmProxmox'] . '/status/start', $postData, $auth);
+
+            if ($result) {
+                // Update status VM ke 'aktif'
+>>>>>>> 5e287a0fccc78f4c044d859ee10e8bd339309165
                 $this->vmModel->updateVMStatus($vmData['idVM'], 'aktif');
             }
             return redirect()->to('/pilihos');
         }
 
+<<<<<<< HEAD
+=======
+        // Jika belum punya VM, buat VM baru
+>>>>>>> 5e287a0fccc78f4c044d859ee10e8bd339309165
         $auth = proxmox_login();
         if ($auth) {
             $vmid = rand(100, 999);
 
+<<<<<<< HEAD
             $name = 'vm-' . $os . '-' . $vmid;
 
+=======
+            // Pastikan nama valid
+            $name = 'vm-' . $os . '-' . $vmid;
+
+            // Set ISO berdasarkan OS yang dipilih
+>>>>>>> 5e287a0fccc78f4c044d859ee10e8bd339309165
             $iso = '';
             switch ($os) {
                 case 'centos':
@@ -146,6 +200,7 @@ class PilihOS extends BaseController
                     'jenisVM' => $os,
                 ]);
 
+<<<<<<< HEAD
                 $vmData = $this->vmModel->getVMByUserId($userId);
 
                 if ($vmData) {
@@ -154,6 +209,18 @@ class PilihOS extends BaseController
                     $result = proxmox_post('nodes/server/qemu/' . $vmData['idVmProxmox'] . '/status/start', $postData, $auth);
 
                     if ($result) {
+=======
+                // Langsung nyalakan VM setelah dibuat
+                $vmData = $this->vmModel->getVMByUserId($userId);
+
+                if ($vmData) {
+                    $auth = proxmox_login(); // Login ke Proxmox
+                    $postData = []; // Data yang diperlukan untuk start VM
+                    $result = proxmox_post('nodes/server/qemu/' . $vmData['idVmProxmox'] . '/status/start', $postData, $auth);
+
+                    if ($result) {
+                        // Update status VM ke 'aktif'
+>>>>>>> 5e287a0fccc78f4c044d859ee10e8bd339309165
                         $this->vmModel->updateVMStatus($vmData['idVM'], 'aktif');
                     }
                     return redirect()->to('/pilihos');
@@ -166,6 +233,7 @@ class PilihOS extends BaseController
         return redirect()->to('/pilihos');
     }
 
+<<<<<<< HEAD
     // public function stopVM()
     // {
     //     $userId = session()->get('idUser');
@@ -186,6 +254,29 @@ class PilihOS extends BaseController
     // }
 
 
+=======
+    // Fungsi untuk mematikan VM
+    public function stopVM()
+    {
+        $userId = session()->get('idUser');
+        $vmData = $this->vmModel->getVMByUserId($userId);
+
+        if ($vmData) {
+            $auth = proxmox_login(); // Login ke Proxmox
+            $postData = []; // Data yang diperlukan untuk stop VM
+            $result = proxmox_post('nodes/server/qemu/' . $vmData['idVmProxmox'] . '/status/stop', $postData, $auth);
+
+            if ($result) {
+                // Update status VM ke 'nonaktif'
+                $this->vmModel->updateVMStatus($vmData['idVM'], 'nonaktif');
+            }
+        }
+
+        return redirect()->to('/pilihos');
+    }
+
+    // Fungsi untuk mencari port kosong
+>>>>>>> 5e287a0fccc78f4c044d859ee10e8bd339309165
     private function findAvailablePort($start, $end)
     {
         for ($port = $start; $port <= $end; $port++) {

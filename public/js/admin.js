@@ -47,6 +47,7 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
     
+<<<<<<< HEAD
     // Variable untuk menyimpan ID user yang akan dihapus
     let deleteUserId = null;
     
@@ -65,4 +66,6 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     };
     
+=======
+>>>>>>> 5e287a0fccc78f4c044d859ee10e8bd339309165
 });

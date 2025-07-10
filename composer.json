@@ -12,7 +12,11 @@
     "require": {
         "php": "^7.4 || ^8.0",
         "codeigniter4/framework": "^4.0",
+<<<<<<< HEAD
         "google/apiclient": "^2.18"
+=======
+        "google/apiclient": "2.7"
+>>>>>>> 5e287a0fccc78f4c044d859ee10e8bd339309165
     },
     "require-dev": {
         "fakerphp/faker": "^1.9",
