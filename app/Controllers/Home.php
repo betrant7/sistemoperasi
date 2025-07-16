@@ -16,8 +16,8 @@ class Home extends BaseController
         $this->googleClient = new Google_Client();
         $this->googleClient->setClientId('701082620157-nqj50ilv7c0op5pc3gsngc3vrocedplf.apps.googleusercontent.com');
         $this->googleClient->setClientSecret('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');
-        $this->googleClient->setRedirectUri('http://localhost:8080/login/logingoogle');
-        // $this->googleClient->setRedirectUri('https://ujicobavps.cloud/login/logingoogle');
+        // $this->googleClient->setRedirectUri('http://localhost:8080/login/logingoogle');
+        $this->googleClient->setRedirectUri('https://ujicobavps.cloud/login/logingoogle');
         $this->googleClient->addScope('email');
         $this->googleClient->addScope('profile');
         $this->db = new masterUser();
